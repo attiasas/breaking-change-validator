@@ -13,12 +13,13 @@ npm i && npm t
 ```
 
 ## 🚀 Release
-1. Create and merge PR to update dependencies and promote version
+* Make sure to update dependencies in `package.json` before releasing
+1. Create and merge PR/Branch to promote the action version
     * Titled: `Promote version to X.X.X`
-    * Update dependencies in `package.json`
     * Update to `version` attribute value to the next version in `package.json`
     * run `npm i` to update and compile the changes
 2. [Draft a new release](https://github.com/attiasas/breaking-change-validator/releases/new):
     * Tag version: `vX.X.X`
     * Release title: `vX.X.X`
     * Add release notes in the description.
+3. Validate release [workflow](https://github.com/attiasas/breaking-change-validator/actions/workflows/release.yml) run without errors
