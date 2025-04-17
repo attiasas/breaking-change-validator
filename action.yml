@@ -1,0 +1,22 @@
+name: "Validate Single Go Repository"
+description: "Clones and validates a single Go repository against the PR module"
+author: "GitHub Actions"
+inputs:
+  repository:
+    description: 'Git clone URL of the repository to validate'
+    required: true
+  branch:
+    description: 'Optional branch or ref to checkout'
+    required: false
+    default: ''
+  test_command:
+    description: 'Optional shell command to run tests'
+    required: false
+    default: ''
+  fail_on_test_error:
+    description: 'Whether to fail the job on test error'
+    required: false
+    default: 'true'
+runs:
+  using: "node20"
+  main: "dist/main.js"
