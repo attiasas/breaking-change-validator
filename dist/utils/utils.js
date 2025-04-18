@@ -42,45 +42,24 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.CommandError = exports.ErrorWithHint = exports.Utils = exports.ActionInputs = void 0;
+exports.CommandError = exports.ErrorWithHint = exports.Utils = void 0;
 const core = __importStar(require("@actions/core"));
 const exec = __importStar(require("@actions/exec"));
 const path = __importStar(require("path"));
 const fs = __importStar(require("fs"));
 const os = __importStar(require("os"));
-class ActionInputs {
-    constructor() {
-        this.repositoryUrl = core.getInput(ActionInputs.REPOSITORY_URL_ARG, {
-            required: true,
-        });
-        this.repositoryBranch = core.getInput(ActionInputs.REPOSITORY_BRANCH_ARG);
-        this.testCommand = core.getInput(ActionInputs.TEST_COMMAND_ARG);
-        this.sourceDir = process.env.GITHUB_WORKSPACE || "";
-    }
-    runTargetTests() {
-        return this.testCommand.length > 0;
-    }
-}
-exports.ActionInputs = ActionInputs;
-// The repository Clone URL to be validated
-ActionInputs.REPOSITORY_URL_ARG = "repository";
-// The repository branch to be validated
-ActionInputs.REPOSITORY_BRANCH_ARG = "branch";
-// The command to run the tests if any
-ActionInputs.TEST_COMMAND_ARG = "test_command";
+const github = __importStar(require("@actions/github"));
 class Utils {
     static cloneRepository(inputs) {
         return __awaiter(this, void 0, void 0, function* () {
             try {
                 core.startGroup("Cloning target repository");
                 const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "validate-repo-"));
-                //   const cloneArgs = ["clone", inputs.repositoryUrl, tempDir];
                 const cloneArgs = ["git", "clone", inputs.repositoryUrl, tempDir];
                 if (inputs.repositoryBranch) {
                     cloneArgs.splice(2, 0, "--branch", inputs.repositoryBranch, "--single-branch");
                 }
                 core.info(`Cloning ${inputs.repositoryUrl} ${inputs.repositoryBranch ? "(@" + inputs.repositoryBranch + ")" : ""} to ${tempDir}`);
-                //   await exec.exec("git", cloneArgs);
                 yield Utils.runCommand(cloneArgs);
                 core.info(`Cloned target repository to ${tempDir}`);
                 return tempDir;
@@ -96,12 +75,56 @@ class Utils {
                 core.startGroup("Running tests...");
                 const testCmd = core.getInput("test_command");
                 core.info(`Running: ${inputs.testCommand}`);
-                //   await exec.exec("sh", ["-c", inputs.testCommand], { cwd: targetDir });
                 yield Utils.runCommand(["sh", "-c", inputs.testCommand], { cwd: targetDir });
                 core.info("Tests passed");
             }
             finally {
                 core.endGroup();
+            }
+        });
+    }
+    static addCommentToPR(content) {
+        return __awaiter(this, void 0, void 0, function* () {
+            try {
+                let token = process.env.GITHUB_TOKEN;
+                if (!token) {
+                    throw new Error("GitHub token is required but not provided.");
+                }
+                const octokit = github.getOctokit(token);
+                const context = github.context;
+                if (!context.payload.pull_request) {
+                    throw new Error("This action can only run on pull requests.");
+                }
+                const { owner, repo } = context.repo;
+                const pull_number = context.payload.pull_request.number;
+                core.info(`Adding comment to PR #${pull_number} in ${owner}/${repo}`);
+                yield octokit.rest.issues.createComment({
+                    owner,
+                    repo,
+                    issue_number: pull_number,
+                    body: content,
+                });
+                core.info("Comment added successfully.");
+                return true;
+            }
+            catch (error) {
+                core.warning(`Failed to add comment to PR: ${error.message}`);
+                return false;
+            }
+        });
+    }
+    static addJobSummaryContent(content_1) {
+        return __awaiter(this, arguments, void 0, function* (content, override = false) {
+            try {
+                core.info("Adding job summary content...");
+                core.summary.addRaw(content);
+                yield core.summary.write({ overwrite: override });
+                core.info("Job summary content added successfully.");
+                return true;
+            }
+            catch (error) {
+                core.warning(`Failed to ${override ? "override" : "add"} job summary content: ${error.message}`);
+                return false;
             }
         });
     }
@@ -135,7 +158,6 @@ class Utils {
                     },
                 },
             };
-            core.debug(`Running command: ${command} ${args ? args.join(" ") : ""}`);
             const exitCode = yield exec.exec(command, args, options);
             if (exitCode !== 0) {
                 throw new CommandError(cmd.join(" "), stderr, exitCode, cmdOptions === null || cmdOptions === void 0 ? void 0 : cmdOptions.hint);

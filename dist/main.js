@@ -45,13 +45,15 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const core = __importStar(require("@actions/core"));
 const utils_1 = require("./utils/utils");
 const output_1 = require("./utils/output");
+const input_1 = require("./utils/input");
 const validationManager_1 = require("./validationManager");
 function main() {
     return __awaiter(this, void 0, void 0, function* () {
         try {
-            core.info("Action Version: " + require("../package.json").version);
+            core.info(`🔍 Breaking Change Validator Github Action (version ${require("../package.json").version})`);
             // Initialize the action
-            const inputs = new utils_1.ActionInputs();
+            const inputs = new input_1.ActionInputs();
+            core.info(inputs.toString());
             const results = new output_1.ActionResults();
             // Instantiate the validation manager with the source directory
             const validationManager = yield new validationManager_1.ValidationManager().init(inputs.sourceDir);
@@ -62,7 +64,7 @@ function main() {
             // Validate the target
             yield validateTarget(validationManager, targetDir, results)
                 .then((validated) => __awaiter(this, void 0, void 0, function* () {
-                if (!validated || !inputs.runTargetTests()) {
+                if (!validated || !inputs.shouldRunTargetTests()) {
                     return;
                 }
                 // Run the target tests
@@ -84,7 +86,7 @@ function validateTarget(validationManager, targetDir, results) {
             return true;
         }
         catch (error) {
-            results.AppendError(error);
+            results.appendValidationError(error);
             return false;
         }
     });
@@ -95,14 +97,28 @@ function testTarget(inputs, targetDir, results) {
             yield utils_1.Utils.runTests(inputs, targetDir);
         }
         catch (error) {
-            results.AppendError(error);
+            results.appendTestError(error);
         }
     });
 }
 function reportResults(inputs, results) {
-    if (!results.hasErrors()) {
-        return;
-    }
-    core.setFailed(results.getErrorMessage());
+    return __awaiter(this, void 0, void 0, function* () {
+        if (!results.hasErrors()) {
+            core.info(output_1.Output.ACTION_SUCCESS_MSG);
+            return;
+        }
+        let summary = output_1.Output.generateSummary(results);
+        if (summary.length > 0) {
+            core.info(summary);
+        }
+        if (inputs.requestedStrategy(output_1.OutputType.JobSummary)) {
+            yield utils_1.Utils.addJobSummaryContent(output_1.Output.generateMarkdown(results));
+        }
+        if (inputs.requestedStrategy(output_1.OutputType.Comment)) {
+            yield utils_1.Utils.addCommentToPR(output_1.Output.generateSummary(results));
+        }
+        // Set the action msg
+        core.setFailed(results.getActionErrorMessage());
+    });
 }
 main();

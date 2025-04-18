@@ -13,6 +13,7 @@ inputs:
     description: 'Optional shell command to run at the target repository with the changes'
     required: false
     default: ''
+
 runs:
   using: "node20"
   main: "dist/main.js"

@@ -1,13 +1,17 @@
 import * as core from "@actions/core";
-import { ActionInputs, Utils } from "./utils/utils";
-import { ActionResults } from "./utils/output";
+import { Utils } from "./utils/utils";
+import { ActionResults, Output, OutputType } from "./utils/output";
+import { ActionInputs } from "./utils/input";
 import { ValidationManager } from "./validationManager";
 
 async function main() {
   try {
-    core.info("Action Version: " + require("../package.json").version);
+    core.info(
+      `🔍 Breaking Change Validator Github Action (version ${require("../package.json").version})`,
+    );
     // Initialize the action
     const inputs = new ActionInputs();
+    core.info(inputs.toString());
     const results: ActionResults = new ActionResults();
     // Instantiate the validation manager with the source directory
     const validationManager = await new ValidationManager().init(
@@ -20,7 +24,7 @@ async function main() {
     // Validate the target
     await validateTarget(validationManager, targetDir, results)
       .then(async (validated: boolean) => {
-        if (!validated || !inputs.runTargetTests()) {
+        if (!validated || !inputs.shouldRunTargetTests()) {
           return;
         }
         // Run the target tests
@@ -43,7 +47,7 @@ async function validateTarget(
     await validationManager.validateTarget(targetDir);
     return true;
   } catch (error: any) {
-    results.AppendError(error);
+    results.appendValidationError(error);
     return false;
   }
 }
@@ -56,15 +60,27 @@ async function testTarget(
   try {
     await Utils.runTests(inputs, targetDir);
   } catch (error: any) {
-    results.AppendError(error);
+    results.appendTestError(error);
   }
 }
 
-function reportResults(inputs: ActionInputs, results: ActionResults) {
+async function reportResults(inputs: ActionInputs, results: ActionResults) {
   if (!results.hasErrors()) {
+    core.info(Output.ACTION_SUCCESS_MSG);
     return;
   }
-  core.setFailed(results.getErrorMessage());
+  let summary = Output.generateSummary(results);
+  if (summary.length > 0) {
+    core.info(summary);
+  }
+  if (inputs.requestedStrategy(OutputType.JobSummary)) {
+    await Utils.addJobSummaryContent(Output.generateMarkdown(results));
+  }
+  if (inputs.requestedStrategy(OutputType.Comment)) {
+    await Utils.addCommentToPR(Output.generateSummary(results));
+  }
+  // Set the action msg
+  core.setFailed(results.getActionErrorMessage());
 }
 
 main();

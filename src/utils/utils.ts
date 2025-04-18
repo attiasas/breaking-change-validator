@@ -3,41 +3,14 @@ import * as exec from "@actions/exec";
 import * as path from "path";
 import * as fs from "fs";
 import * as os from "os";
-
-export class ActionInputs {
-  // The repository Clone URL to be validated
-  public static readonly REPOSITORY_URL_ARG: string = "repository";
-  // The repository branch to be validated
-  public static readonly REPOSITORY_BRANCH_ARG: string = "branch";
-  // The command to run the tests if any
-  public static readonly TEST_COMMAND_ARG: string = "test_command";
-
-  public readonly repositoryUrl: string;
-  public readonly repositoryBranch: string;
-  public readonly testCommand: string;
-
-  public readonly sourceDir: string;
-
-  constructor() {
-    this.repositoryUrl = core.getInput(ActionInputs.REPOSITORY_URL_ARG, {
-      required: true,
-    });
-    this.repositoryBranch = core.getInput(ActionInputs.REPOSITORY_BRANCH_ARG);
-    this.testCommand = core.getInput(ActionInputs.TEST_COMMAND_ARG);
-    this.sourceDir = process.env.GITHUB_WORKSPACE || "";
-  }
-
-  public runTargetTests(): boolean {
-    return this.testCommand.length > 0;
-  }
-}
+import * as github from "@actions/github";
+import { ActionInputs } from "./input";
 
 export class Utils {
   public static async cloneRepository(inputs: ActionInputs): Promise<string> {
     try {
       core.startGroup("Cloning target repository");
       const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "validate-repo-"));
-      //   const cloneArgs = ["clone", inputs.repositoryUrl, tempDir];
       const cloneArgs = ["git", "clone", inputs.repositoryUrl, tempDir];
       if (inputs.repositoryBranch) {
         cloneArgs.splice(
@@ -51,7 +24,6 @@ export class Utils {
       core.info(
         `Cloning ${inputs.repositoryUrl} ${inputs.repositoryBranch ? "(@" + inputs.repositoryBranch + ")" : ""} to ${tempDir}`,
       );
-      //   await exec.exec("git", cloneArgs);
       await Utils.runCommand(cloneArgs);
       core.info(`Cloned target repository to ${tempDir}`);
       return tempDir;
@@ -68,11 +40,55 @@ export class Utils {
       core.startGroup("Running tests...");
       const testCmd = core.getInput("test_command");
       core.info(`Running: ${inputs.testCommand}`);
-      //   await exec.exec("sh", ["-c", inputs.testCommand], { cwd: targetDir });
       await Utils.runCommand(["sh", "-c", inputs.testCommand], {cwd: targetDir});
       core.info("Tests passed");
     } finally {
       core.endGroup();
+    }
+  }
+
+  public static async addCommentToPR(content: string): Promise<boolean> {
+    try {
+      let token = process.env.GITHUB_TOKEN;
+      if (!token) {
+        throw new Error("GitHub token is required but not provided.");
+      }
+      const octokit = github.getOctokit(token);
+      const context = github.context;
+
+      if (!context.payload.pull_request) {
+        throw new Error("This action can only run on pull requests.");
+      }
+
+      const { owner, repo } = context.repo;
+      const pull_number = context.payload.pull_request.number;
+
+      core.info(`Adding comment to PR #${pull_number} in ${owner}/${repo}`);
+      await octokit.rest.issues.createComment({
+        owner,
+        repo,
+        issue_number: pull_number,
+        body: content,
+      });
+
+      core.info("Comment added successfully.");
+      return true;
+    } catch (error: any) {
+      core.warning(`Failed to add comment to PR: ${error.message}`);
+      return false;
+    }
+  }
+
+  public static async addJobSummaryContent(content: string, override: boolean = false): Promise<boolean> {
+    try {
+      core.info("Adding job summary content...");
+      core.summary.addRaw(content);
+      await core.summary.write({ overwrite: override });
+      core.info("Job summary content added successfully.");
+      return true;
+    } catch (error: any) {
+      core.warning(`Failed to ${override ? "override" : "add"} job summary content: ${error.message}`);
+      return false;
     }
   }
 
@@ -105,7 +121,6 @@ export class Utils {
         },
       },
     };
-    core.debug(`Running command: ${command} ${args ? args.join(" ") : ""}`);
     const exitCode = await exec.exec(command, args, options);
     if (exitCode !== 0) {
       throw new CommandError(cmd.join(" "), stderr, exitCode, cmdOptions?.hint);
