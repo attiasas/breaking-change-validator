@@ -109,7 +109,7 @@ class Utils {
                 const testCmd = core.getInput("test_command");
                 core.info(`Running: ${inputs.testCommand}`);
                 //   await exec.exec("sh", ["-c", inputs.testCommand], { cwd: targetDir });
-                yield Utils.runCommand(["sh", "-c", inputs.testCommand], targetDir);
+                yield Utils.runCommand(["sh", "-c", inputs.testCommand], { cwd: targetDir });
                 core.info("Tests passed");
             }
             finally {
@@ -117,8 +117,8 @@ class Utils {
             }
         });
     }
-    static runCommand(cmd_1, cwd_1, env_1) {
-        return __awaiter(this, arguments, void 0, function* (cmd, cwd, env, silent = false) {
+    static runCommand(cmd, cmdOptions) {
+        return __awaiter(this, void 0, void 0, function* () {
             if (cmd.length === 0 || cmd[0].length === 0) {
                 throw new Error("Command is empty");
             }
@@ -130,16 +130,20 @@ class Utils {
             let stdout = "";
             let stderr = "";
             const options = {
-                cwd: cwd,
-                env: env,
-                silent: silent,
+                cwd: cmdOptions === null || cmdOptions === void 0 ? void 0 : cmdOptions.cwd,
+                env: cmdOptions === null || cmdOptions === void 0 ? void 0 : cmdOptions.env,
+                silent: cmdOptions === null || cmdOptions === void 0 ? void 0 : cmdOptions.silent,
                 ignoreReturnCode: true,
                 listeners: {
                     stdout: (data) => {
                         stdout += data.toString();
                     },
                     stderr: (data) => {
-                        stderr += data.toString();
+                        let str = data.toString();
+                        if (cmdOptions === null || cmdOptions === void 0 ? void 0 : cmdOptions.stdErrListeners) {
+                            str = cmdOptions.stdErrListeners(str);
+                        }
+                        stderr += str;
                     },
                 },
             };

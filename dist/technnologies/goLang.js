@@ -84,7 +84,12 @@ class GolangHandler {
         return __awaiter(this, void 0, void 0, function* () {
             core.info("Running go validation...");
             // await exec.exec("go", ["vet", "./..."], { cwd: wd });
-            yield utils_1.Utils.runCommand(["go", "vet", "./..."], wd);
+            yield utils_1.Utils.runCommand(["go", "vet", "./..."], { cwd: wd, stdErrListeners: (data) => {
+                    if (data.startsWith("go: downloading")) {
+                        return "";
+                    }
+                    return data;
+                } });
         });
     }
 }

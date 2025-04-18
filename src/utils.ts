@@ -32,6 +32,13 @@ export class ActionInputs {
   }
 }
 
+export interface CommandOptions {
+    cwd?: string;
+    env?: { [key: string]: string } | undefined;
+    silent?: boolean;
+    stdErrListeners?: (data: string) => string;
+}
+
 export class CommandError extends Error {
   readonly command: string;
   readonly stderr: string;
@@ -91,7 +98,7 @@ export class Utils {
       const testCmd = core.getInput("test_command");
       core.info(`Running: ${inputs.testCommand}`);
       //   await exec.exec("sh", ["-c", inputs.testCommand], { cwd: targetDir });
-      await Utils.runCommand(["sh", "-c", inputs.testCommand], targetDir);
+      await Utils.runCommand(["sh", "-c", inputs.testCommand], {cwd: targetDir});
       core.info("Tests passed");
     } finally {
       core.endGroup();
@@ -100,9 +107,10 @@ export class Utils {
 
   public static async runCommand(
     cmd: string[],
-    cwd?: string,
-    env?: { [key: string]: string } | undefined,
-    silent: boolean = false,
+    cmdOptions?: CommandOptions,
+    // cwd?: string,
+    // env?: { [key: string]: string } | undefined,
+    // silent: boolean = false,
   ): Promise<string> {
     if (cmd.length === 0 || cmd[0].length === 0) {
       throw new Error("Command is empty");
@@ -115,16 +123,20 @@ export class Utils {
     let stdout = "";
     let stderr = "";
     const options = {
-      cwd: cwd,
-      env: env,
-      silent: silent,
+      cwd: cmdOptions?.cwd,
+      env: cmdOptions?.env,
+      silent: cmdOptions?.silent,
       ignoreReturnCode: true,
       listeners: {
         stdout: (data: Buffer) => {
           stdout += data.toString();
         },
         stderr: (data: Buffer) => {
-          stderr += data.toString();
+          let str = data.toString();
+            if (cmdOptions?.stdErrListeners) {
+                str = cmdOptions.stdErrListeners(str);
+            }
+          stderr += str;
         },
       },
     };
