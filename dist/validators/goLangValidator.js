@@ -42,26 +42,26 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.GolangHandler = void 0;
+exports.GolangValidator = void 0;
 const fs = __importStar(require("fs"));
 const path = __importStar(require("path"));
 const core = __importStar(require("@actions/core"));
-const utils_1 = require("../utils");
-class GolangHandler {
+const utils_1 = require("../utils/utils");
+class GolangValidator {
     isSupporting(wd) {
         return __awaiter(this, void 0, void 0, function* () {
             // Check if the directory contains a go.mod file
-            return fs.existsSync(path.join(wd, GolangHandler.DESCRIPTOR_FILE));
+            return fs.existsSync(path.join(wd, GolangValidator.DESCRIPTOR_FILE));
         });
     }
     extractModule(wd) {
         return __awaiter(this, void 0, void 0, function* () {
-            const mainGoMod = path.join(wd, GolangHandler.DESCRIPTOR_FILE);
+            const mainGoMod = path.join(wd, GolangValidator.DESCRIPTOR_FILE);
             const content = fs.readFileSync(mainGoMod, "utf8");
             const match = content.match(/^module\s+(.+)$/m);
             if (match) {
                 return {
-                    type: GolangHandler.GO_TYPE,
+                    type: GolangValidator.GO_TYPE,
                     name: match[1],
                     path: mainGoMod,
                 };
@@ -74,7 +74,7 @@ class GolangHandler {
             if (source.type !== "golang") {
                 throw new Error("Source Module type mismatch");
             }
-            const goModPath = path.join(wd, GolangHandler.DESCRIPTOR_FILE);
+            const goModPath = path.join(wd, GolangValidator.DESCRIPTOR_FILE);
             const replaceLine = `replace ${source.name} => ${path.dirname(source.path)}`;
             fs.appendFileSync(goModPath, `\n${replaceLine}\n`);
             core.info(`Appended: '${replaceLine}' in ${goModPath}`);
@@ -84,7 +84,7 @@ class GolangHandler {
         return __awaiter(this, void 0, void 0, function* () {
             core.info("Running go validation...");
             // await exec.exec("go", ["vet", "./..."], { cwd: wd });
-            yield utils_1.Utils.runCommand(["go", "vet", "./..."], { cwd: wd, stdErrListeners: (data) => {
+            yield utils_1.Utils.runCommand(["go", "vet", "./..."], { cwd: wd, stdErrFilter: (data) => {
                     if (data.startsWith("go: downloading")) {
                         return "";
                     }
@@ -93,6 +93,6 @@ class GolangHandler {
         });
     }
 }
-exports.GolangHandler = GolangHandler;
-GolangHandler.DESCRIPTOR_FILE = "go.mod";
-GolangHandler.GO_TYPE = "golang";
+exports.GolangValidator = GolangValidator;
+GolangValidator.DESCRIPTOR_FILE = "go.mod";
+GolangValidator.GO_TYPE = "golang";

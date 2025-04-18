@@ -42,13 +42,13 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.TechManager = void 0;
+exports.ValidationManager = void 0;
 const core = __importStar(require("@actions/core"));
-const goLang_1 = require("./technnologies/goLang");
-class TechManager {
+const goLangValidator_1 = require("./validators/goLangValidator");
+class ValidationManager {
     constructor() {
         this._validators = [];
-        this._validators.push(new goLang_1.GolangHandler());
+        this._validators.push(new goLangValidator_1.GolangValidator());
     }
     get source() {
         if (this._source === undefined) {
@@ -62,6 +62,7 @@ class TechManager {
                 core.startGroup("Parsing source repository");
                 this._source = yield this.extractModule(wd);
                 core.info(`Extracted module: ${JSON.stringify(this.source)}`);
+                return this;
             }
             finally {
                 core.endGroup();
@@ -79,7 +80,7 @@ class TechManager {
             throw new Error("No supported technology found");
         });
     }
-    installTarget(source, targetDir) {
+    installTarget(targetDir) {
         return __awaiter(this, void 0, void 0, function* () {
             try {
                 core.startGroup("Preparing target repository");
@@ -87,7 +88,7 @@ class TechManager {
                 // Install the target technology
                 for (const validator of this._validators) {
                     if (yield validator.isSupporting(targetDir)) {
-                        yield validator.install(source, targetDir);
+                        yield validator.install(this.source, targetDir);
                         installed.push(validator.constructor.name);
                     }
                 }
@@ -127,4 +128,4 @@ class TechManager {
         });
     }
 }
-exports.TechManager = TechManager;
+exports.ValidationManager = ValidationManager;

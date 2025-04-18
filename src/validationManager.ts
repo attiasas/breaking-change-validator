@@ -1,14 +1,13 @@
 import * as core from "@actions/core";
-import { GolangHandler } from "./technnologies/goLang";
-import { Module, TechValidator } from "./technnologies/techValidator";
-import * as fs from "fs";
+import { GolangValidator } from "./validators/goLangValidator";
+import { Module, TechValidator } from "./validators/techValidator";
 
-export class TechManager {
+export class ValidationManager {
   private _validators: TechValidator[] = [];
   private _source: Module | undefined;
 
   constructor() {
-    this._validators.push(new GolangHandler());
+    this._validators.push(new GolangValidator());
   }
 
   public get source(): Module {
@@ -18,11 +17,12 @@ export class TechManager {
     return this._source;
   }
 
-  public async init(wd: string): Promise<void> {
+  public async init(wd: string): Promise<ValidationManager> {
     try {
       core.startGroup("Parsing source repository");
       this._source = await this.extractModule(wd);
       core.info(`Extracted module: ${JSON.stringify(this.source)}`);
+      return this;
     } finally {
       core.endGroup();
     }
@@ -38,14 +38,14 @@ export class TechManager {
     throw new Error("No supported technology found");
   }
 
-  public async installTarget(source: Module, targetDir: string): Promise<void> {
+  public async installTarget(targetDir: string): Promise<void> {
     try {
       core.startGroup("Preparing target repository");
       let installed = [];
       // Install the target technology
       for (const validator of this._validators) {
         if (await validator.isSupporting(targetDir)) {
-          await validator.install(source, targetDir);
+          await validator.install(this.source, targetDir);
           installed.push(validator.constructor.name);
         }
       }

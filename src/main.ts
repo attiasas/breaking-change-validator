@@ -1,47 +1,60 @@
 import * as core from "@actions/core";
-import { ActionInputs, Utils } from "./utils";
-import { ActionResults } from "./output";
-import { TechManager } from "./techManager";
+import { ActionInputs, Utils } from "./utils/utils";
+import { ActionResults } from "./utils/output";
+import { ValidationManager } from "./validationManager";
 
 async function main() {
-  // Initialize the action
-  const inputs = new ActionInputs();
-  const results: ActionResults = new ActionResults();
-  const techManager = new TechManager();
-  core.info("Action Version: " + require("../package.json").version);
   try {
-    // Instantiate the technology manager with the source directory
-    await techManager.init(inputs.sourceDir);
+    core.info("Action Version: " + require("../package.json").version);
+    // Initialize the action
+    const inputs = new ActionInputs();
+    const results: ActionResults = new ActionResults();
+    // Instantiate the validation manager with the source directory
+    const validationManager = await new ValidationManager().init(
+      inputs.sourceDir,
+    );
     // Clone the target repository
     let targetDir = await Utils.cloneRepository(inputs);
     // Prepare the target for the actions
-    await techManager.installTarget(techManager.source, targetDir);
+    await validationManager.installTarget(targetDir);
     // Validate the target
-    await runActionOnTarget(targetDir, results, async (targetDir) => {
-      await techManager.validateTarget(targetDir);
-    });
-    if (!inputs.runTargetTests()) {
-      core.debug("Skipping target tests");
-      return;
-    }
-    // Run the target tests
-    await runActionOnTarget(targetDir, results, async (targetDir) => {
-      await Utils.runTests(inputs, targetDir);
-    });
+    await validateTarget(validationManager, targetDir, results)
+      .then(async (validationFailed: boolean) => {
+        if (validationFailed || !inputs.runTargetTests()) {
+          return;
+        }
+        // Run the target tests
+        await testTarget(inputs, targetDir, results);
+      })
+      .finally(() => {
+        reportResults(inputs, results);
+      });
   } catch (error: any) {
-    results.AppendError(error);
-  } finally {
-    reportResults(inputs, results);
+    core.setFailed(error.message);
   }
 }
 
-async function runActionOnTarget(
+async function validateTarget(
+  validationManager: ValidationManager,
   targetDir: string,
   results: ActionResults,
-  action: (targetDir: string) => Promise<void>,
+): Promise<boolean> {
+  try {
+    await validationManager.validateTarget(targetDir);
+    return true;
+  } catch (error: any) {
+    results.AppendError(error);
+    return false;
+  }
+}
+
+async function testTarget(
+  inputs: ActionInputs,
+  targetDir: string,
+  results: ActionResults,
 ) {
   try {
-    await action(targetDir);
+    await Utils.runTests(inputs, targetDir);
   } catch (error: any) {
     results.AppendError(error);
   }

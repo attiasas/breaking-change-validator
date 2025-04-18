@@ -42,7 +42,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.Utils = exports.CommandError = exports.ActionInputs = void 0;
+exports.CommandError = exports.ErrorWithHint = exports.Utils = exports.ActionInputs = void 0;
 const core = __importStar(require("@actions/core"));
 const exec = __importStar(require("@actions/exec"));
 const path = __importStar(require("path"));
@@ -68,18 +68,6 @@ ActionInputs.REPOSITORY_URL_ARG = "repository";
 ActionInputs.REPOSITORY_BRANCH_ARG = "branch";
 // The command to run the tests if any
 ActionInputs.TEST_COMMAND_ARG = "test_command";
-class CommandError extends Error {
-    constructor(command, stderr, exitCode, message) {
-        super(message);
-        this.command = command;
-        this.stderr = stderr;
-        this.exitCode = exitCode;
-    }
-    toString() {
-        return `CommandError: ${this.command} failed with exit code ${this.exitCode}:\n${this.stderr}`;
-    }
-}
-exports.CommandError = CommandError;
 class Utils {
     static cloneRepository(inputs) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -140,8 +128,8 @@ class Utils {
                     },
                     stderr: (data) => {
                         let str = data.toString();
-                        if (cmdOptions === null || cmdOptions === void 0 ? void 0 : cmdOptions.stdErrListeners) {
-                            str = cmdOptions.stdErrListeners(str);
+                        if (cmdOptions === null || cmdOptions === void 0 ? void 0 : cmdOptions.stdErrFilter) {
+                            str = cmdOptions.stdErrFilter(str);
                         }
                         stderr += str;
                     },
@@ -151,10 +139,31 @@ class Utils {
             const exitCode = yield exec.exec(command, args, options);
             core.info(`Command done with exit code ${exitCode}`);
             if (exitCode !== 0) {
-                throw new CommandError(cmd.join(" "), stderr, exitCode);
+                throw new CommandError(cmd.join(" "), stderr, exitCode, cmdOptions === null || cmdOptions === void 0 ? void 0 : cmdOptions.hint);
             }
             return stdout;
         });
     }
 }
 exports.Utils = Utils;
+class ErrorWithHint extends Error {
+    constructor(message, hint) {
+        super(message);
+        this._hint = hint;
+    }
+    get hint() {
+        return this._hint;
+    }
+    toString() {
+        return `${this.message}${this._hint ? `\nHint: ${this._hint}` : ""}`;
+    }
+}
+exports.ErrorWithHint = ErrorWithHint;
+class CommandError extends ErrorWithHint {
+    constructor(command, stderr, exitCode, hint) {
+        super(`CommandError: ${command} failed with exit code ${exitCode}`, hint);
+        this.stderr = stderr;
+        this.exitCode = exitCode;
+    }
+}
+exports.CommandError = CommandError;

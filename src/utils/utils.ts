@@ -32,35 +32,6 @@ export class ActionInputs {
   }
 }
 
-export interface CommandOptions {
-    cwd?: string;
-    env?: { [key: string]: string } | undefined;
-    silent?: boolean;
-    stdErrListeners?: (data: string) => string;
-}
-
-export class CommandError extends Error {
-  readonly command: string;
-  readonly stderr: string;
-  readonly exitCode: number;
-
-  constructor(
-    command: string,
-    stderr: string,
-    exitCode: number,
-    message?: string,
-  ) {
-    super(message);
-    this.command = command;
-    this.stderr = stderr;
-    this.exitCode = exitCode;
-  }
-
-  public toString(): string {
-    return `CommandError: ${this.command} failed with exit code ${this.exitCode}:\n${this.stderr}`;
-  }
-}
-
 export class Utils {
   public static async cloneRepository(inputs: ActionInputs): Promise<string> {
     try {
@@ -105,13 +76,7 @@ export class Utils {
     }
   }
 
-  public static async runCommand(
-    cmd: string[],
-    cmdOptions?: CommandOptions,
-    // cwd?: string,
-    // env?: { [key: string]: string } | undefined,
-    // silent: boolean = false,
-  ): Promise<string> {
+  public static async runCommand(cmd: string[], cmdOptions?: CommandOptions): Promise<string> {
     if (cmd.length === 0 || cmd[0].length === 0) {
       throw new Error("Command is empty");
     }
@@ -133,8 +98,8 @@ export class Utils {
         },
         stderr: (data: Buffer) => {
           let str = data.toString();
-            if (cmdOptions?.stdErrListeners) {
-                str = cmdOptions.stdErrListeners(str);
+            if (cmdOptions?.stdErrFilter) {
+                str = cmdOptions.stdErrFilter(str);
             }
           stderr += str;
         },
@@ -144,8 +109,47 @@ export class Utils {
     const exitCode = await exec.exec(command, args, options);
     core.info(`Command done with exit code ${exitCode}`);
     if (exitCode !== 0) {
-      throw new CommandError(cmd.join(" "), stderr, exitCode);
+      throw new CommandError(cmd.join(" "), stderr, exitCode, cmdOptions?.hint);
     }
     return stdout;
+  }
+}
+
+export class ErrorWithHint extends Error {
+  private _hint?: string;
+  constructor(message?: string, hint?: string) {
+    super(message);
+    this._hint = hint;
+  }
+  public get hint(): string | undefined {
+    return this._hint;
+  }
+  public toString(): string {
+    return `${this.message}${this._hint ? `\nHint: ${this._hint}` : ""}`;
+  }
+}
+
+export interface CommandOptions {
+    cwd?: string;
+    env?: { [key: string]: string } | undefined;
+    silent?: boolean;
+    hint?: string;
+    stdErrFilter?: (data: string) => string;
+}
+
+export class CommandError extends ErrorWithHint {
+  readonly stderr: string;
+  readonly exitCode: number;
+
+  constructor(
+    command: string,
+    stderr: string,
+    exitCode: number,
+    hint?: string,
+
+  ) {
+    super(`CommandError: ${command} failed with exit code ${exitCode}`, hint);
+    this.stderr = stderr;
+    this.exitCode = exitCode;
   }
 }

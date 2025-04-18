@@ -43,48 +43,56 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const core = __importStar(require("@actions/core"));
-const utils_1 = require("./utils");
-const output_1 = require("./output");
-const techManager_1 = require("./techManager");
+const utils_1 = require("./utils/utils");
+const output_1 = require("./utils/output");
+const validationManager_1 = require("./validationManager");
 function main() {
     return __awaiter(this, void 0, void 0, function* () {
-        // Initialize the action
-        const inputs = new utils_1.ActionInputs();
-        const results = new output_1.ActionResults();
-        const techManager = new techManager_1.TechManager();
-        core.info("Action Version: " + require("../package.json").version);
         try {
-            // Instantiate the technology manager with the source directory
-            yield techManager.init(inputs.sourceDir);
+            core.info("Action Version: " + require("../package.json").version);
+            // Initialize the action
+            const inputs = new utils_1.ActionInputs();
+            const results = new output_1.ActionResults();
+            // Instantiate the validation manager with the source directory
+            const validationManager = yield new validationManager_1.ValidationManager().init(inputs.sourceDir);
             // Clone the target repository
             let targetDir = yield utils_1.Utils.cloneRepository(inputs);
             // Prepare the target for the actions
-            yield techManager.installTarget(techManager.source, targetDir);
+            yield validationManager.installTarget(targetDir);
             // Validate the target
-            yield runActionOnTarget(targetDir, results, (targetDir) => __awaiter(this, void 0, void 0, function* () {
-                yield techManager.validateTarget(targetDir);
-            }));
-            if (!inputs.runTargetTests()) {
-                core.debug("Skipping target tests");
-                return;
-            }
-            // Run the target tests
-            yield runActionOnTarget(targetDir, results, (targetDir) => __awaiter(this, void 0, void 0, function* () {
-                yield utils_1.Utils.runTests(inputs, targetDir);
-            }));
+            yield validateTarget(validationManager, targetDir, results)
+                .then((validationFailed) => __awaiter(this, void 0, void 0, function* () {
+                if (validationFailed || !inputs.runTargetTests()) {
+                    return;
+                }
+                // Run the target tests
+                yield testTarget(inputs, targetDir, results);
+            }))
+                .finally(() => {
+                reportResults(inputs, results);
+            });
         }
         catch (error) {
-            results.AppendError(error);
-        }
-        finally {
-            reportResults(inputs, results);
+            core.setFailed(error.message);
         }
     });
 }
-function runActionOnTarget(targetDir, results, action) {
+function validateTarget(validationManager, targetDir, results) {
     return __awaiter(this, void 0, void 0, function* () {
         try {
-            yield action(targetDir);
+            yield validationManager.validateTarget(targetDir);
+            return true;
+        }
+        catch (error) {
+            results.AppendError(error);
+            return false;
+        }
+    });
+}
+function testTarget(inputs, targetDir, results) {
+    return __awaiter(this, void 0, void 0, function* () {
+        try {
+            yield utils_1.Utils.runTests(inputs, targetDir);
         }
         catch (error) {
             results.AppendError(error);
