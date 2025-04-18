@@ -6,7 +6,7 @@ class ActionResults {
         this.errors = [];
     }
     AppendError(error) {
-        this.errors.push(JSON.stringify(error));
+        this.errors.push(error.toString());
     }
     hasErrors() {
         return this.errors.length > 0;

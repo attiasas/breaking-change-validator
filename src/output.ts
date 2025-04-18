@@ -2,7 +2,7 @@ export class ActionResults {
   private readonly errors: string[] = [];
 
   public AppendError(error: any): void {
-    this.errors.push(JSON.stringify(error));
+    this.errors.push(error.toString());
   }
 
   public hasErrors(): boolean {
