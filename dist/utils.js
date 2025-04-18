@@ -75,6 +75,9 @@ class CommandError extends Error {
         this.stderr = stderr;
         this.exitCode = exitCode;
     }
+    toString() {
+        return `CommandError: ${this.command} failed with exit code ${this.exitCode}:\n${this.stderr}`;
+    }
 }
 exports.CommandError = CommandError;
 class Utils {

@@ -48,6 +48,10 @@ export class CommandError extends Error {
     this.stderr = stderr;
     this.exitCode = exitCode;
   }
+
+  public toString(): string {
+    return `CommandError: ${this.command} failed with exit code ${this.exitCode}:\n${this.stderr}`;
+  }
 }
 
 export class Utils {
