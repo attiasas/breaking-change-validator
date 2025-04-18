@@ -133,6 +133,7 @@ class Utils {
                 cwd: cwd,
                 env: env,
                 silent: silent,
+                ignoreReturnCode: true,
                 listeners: {
                     stdout: (data) => {
                         stdout += data.toString();

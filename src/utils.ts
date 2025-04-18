@@ -118,6 +118,7 @@ export class Utils {
       cwd: cwd,
       env: env,
       silent: silent,
+      ignoreReturnCode: true,
       listeners: {
         stdout: (data: Buffer) => {
           stdout += data.toString();
