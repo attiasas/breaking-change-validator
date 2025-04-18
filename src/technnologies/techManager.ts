@@ -1,5 +1,5 @@
 import * as core from "@actions/core";
-import { GolangHandler } from "./golang";
+import { GolangHandler } from "./goLang";
 
 export class TechManager {
     private _validators: TechValidator[] = [];

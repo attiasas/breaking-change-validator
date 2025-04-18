@@ -44,11 +44,11 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.TechValidator = exports.TechManager = void 0;
 const core = __importStar(require("@actions/core"));
-const golang_1 = require("./golang");
+const goLang_1 = require("./goLang");
 class TechManager {
     constructor() {
         this._validators = [];
-        this._validators.push(new golang_1.GolangHandler());
+        this._validators.push(new goLang_1.GolangHandler());
     }
     get source() {
         if (this._source === undefined) {
