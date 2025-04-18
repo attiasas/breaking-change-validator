@@ -35,7 +35,7 @@ export class GolangHandler implements TechValidator {
         const goModPath = path.join(wd, GolangHandler.DESCRIPTOR_FILE);
         const replaceLine = `replace ${source.name} => ${path.dirname(source.path)}`;
         fs.appendFileSync(goModPath, `\n${replaceLine}\n`);
-        core.info(`Appended: '${replaceLine}' to ${goModPath}`);
+        core.info(`Appended: '${replaceLine}' in ${goModPath}`);
     }
 
     public async validate(wd: string): Promise<void> {

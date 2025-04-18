@@ -67,6 +67,7 @@ export class TechManager {
       core.startGroup("Validating...");
       // Validate the target technology
       for (const validator of this._validators) {
+        core.info(`Checking ${validator.constructor.name}`);
         if (await validator.isSupporting(targetDir)) {
           core.info(`Validating with ${validator.constructor.name}`);
           await validator.validate(targetDir);
