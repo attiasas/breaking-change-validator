@@ -1,6 +1,7 @@
 import * as core from "@actions/core";
 import { GolangHandler } from "./technnologies/goLang";
 import { Module, TechValidator } from "./technnologies/techValidator";
+import * as fs from "fs";
 
 export class TechManager {
   private _validators: TechValidator[] = [];
@@ -65,6 +66,8 @@ export class TechManager {
     let error = false;
     try {
       core.startGroup(`Validating target repository (${targetDir})`);
+      let lsContent = await fs.promises.readdir(targetDir);
+        core.info(`Target directory content: ${lsContent.join(", ")}`);
       // Validate the target technology
       for (const validator of this._validators) {
         core.info(`Checking ${validator.constructor.name}`);

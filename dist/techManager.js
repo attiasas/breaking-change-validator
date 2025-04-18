@@ -45,6 +45,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.TechManager = void 0;
 const core = __importStar(require("@actions/core"));
 const goLang_1 = require("./technnologies/goLang");
+const fs = __importStar(require("fs"));
 class TechManager {
     constructor() {
         this._validators = [];
@@ -108,6 +109,8 @@ class TechManager {
             let error = false;
             try {
                 core.startGroup(`Validating target repository (${targetDir})`);
+                let lsContent = yield fs.promises.readdir(targetDir);
+                core.info(`Target directory content: ${lsContent.join(", ")}`);
                 // Validate the target technology
                 for (const validator of this._validators) {
                     core.info(`Checking ${validator.constructor.name}`);
