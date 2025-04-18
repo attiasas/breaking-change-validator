@@ -80,6 +80,7 @@ class Utils {
                 }
                 core.info(`Cloning ${inputs.repositoryUrl} ${inputs.repositoryBranch ? "(@" + inputs.repositoryBranch + ")" : ""} to ${tempDir}`);
                 yield exec.exec("git", cloneArgs);
+                core.info(`Cloned target repository to ${tempDir}`);
                 return tempDir;
             }
             finally {

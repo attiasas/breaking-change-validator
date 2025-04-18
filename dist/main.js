@@ -55,16 +55,15 @@ function main() {
         core.info("Action Version: " + require("../package.json").version);
         try {
             // Instantiate the technology manager with the source directory
-            core.info(`Source Repository: ${yield techManager.init(inputs.sourceDir)}`);
+            yield techManager.init(inputs.sourceDir);
             // Clone the target repository
             let targetDir = yield utils_1.Utils.cloneRepository(inputs);
-            core.info(`Cloned target repository to ${targetDir}`);
             // Prepare the target for the actions
             yield techManager.installTarget(techManager.source, targetDir);
             // Validate the target
             yield runActionOnTarget(targetDir, results, techManager.validateTarget);
             if (!inputs.runTargetTests()) {
-                core.info("Skipping target tests");
+                core.debug("Skipping target tests");
                 return;
             }
             // Run the target tests

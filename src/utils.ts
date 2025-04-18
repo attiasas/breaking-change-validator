@@ -51,6 +51,7 @@ export class Utils {
         `Cloning ${inputs.repositoryUrl} ${inputs.repositoryBranch ? "(@" + inputs.repositoryBranch + ")" : ""} to ${tempDir}`,
       );
       await exec.exec("git", cloneArgs);
+      core.info(`Cloned target repository to ${tempDir}`);
       return tempDir;
     } finally {
       core.endGroup();

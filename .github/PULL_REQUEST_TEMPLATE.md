@@ -1,0 +1,4 @@
+- [ ] All [tests](https://github.com/attiasas/breaking-change-validator/actions/workflows/test.yml) passed. If this feature is not already covered by the tests, I added new tests.
+- [ ] I used `npm run compile` for updating the changes before submitting the pull request.
+- [ ] I used `npm run format` for formatting the code before submitting the pull request.
+-----

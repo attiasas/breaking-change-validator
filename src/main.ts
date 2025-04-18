@@ -11,16 +11,15 @@ async function main() {
   core.info("Action Version: " + require("../package.json").version);
   try {
     // Instantiate the technology manager with the source directory
-    core.info(`Source Repository: ${await techManager.init(inputs.sourceDir)}`);
+    await techManager.init(inputs.sourceDir);
     // Clone the target repository
     let targetDir = await Utils.cloneRepository(inputs);
-    core.info(`Cloned target repository to ${targetDir}`);
     // Prepare the target for the actions
     await techManager.installTarget(techManager.source, targetDir);
     // Validate the target
     await runActionOnTarget(targetDir, results, techManager.validateTarget);
     if (!inputs.runTargetTests()) {
-      core.info("Skipping target tests");
+      core.debug("Skipping target tests");
       return;
     }
     // Run the target tests

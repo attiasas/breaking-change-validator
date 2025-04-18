@@ -61,7 +61,7 @@ class TechManager {
             try {
                 core.startGroup("Parsing source repository");
                 this._source = yield this.extractModule(wd);
-                return JSON.stringify(this.source);
+                core.info(`Extracted module: ${JSON.stringify(this.source)}`);
             }
             finally {
                 core.endGroup();
@@ -83,17 +83,19 @@ class TechManager {
         return __awaiter(this, void 0, void 0, function* () {
             try {
                 core.startGroup("Preparing target repository");
-                let installed = false;
+                let installed = [];
                 // Install the target technology
                 for (const validator of this._validators) {
                     if (yield validator.isSupporting(targetDir)) {
                         yield validator.install(source, targetDir);
-                        installed = true;
+                        // Add validator type to installed list
+                        installed.push(validator.constructor.name);
                     }
                 }
-                if (!installed) {
+                if (installed.length === 0) {
                     throw new Error("No supported technology found");
                 }
+                core.info(`Installed source module to target with ${installed.join(", ")}`);
             }
             finally {
                 core.endGroup();
@@ -102,9 +104,9 @@ class TechManager {
     }
     validateTarget(targetDir) {
         return __awaiter(this, void 0, void 0, function* () {
+            let validated = false;
             try {
                 core.startGroup("Validating...");
-                let validated = false;
                 // Validate the target technology
                 for (const validator of this._validators) {
                     if (yield validator.isSupporting(targetDir)) {
@@ -118,6 +120,9 @@ class TechManager {
                 core.info("Validation passed");
             }
             finally {
+                if (!validated) {
+                    core.info("Validation failed");
+                }
                 core.endGroup();
             }
         });
