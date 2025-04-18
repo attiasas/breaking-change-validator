@@ -61,22 +61,27 @@ export class TechManager {
   }
 
   public async validateTarget(targetDir: string): Promise<void> {
-    let validated = false;
+    let validated = [];
+    let error = false;
     try {
       core.startGroup("Validating...");
       // Validate the target technology
       for (const validator of this._validators) {
         if (await validator.isSupporting(targetDir)) {
           await validator.validate(targetDir);
-          validated = true;
+          validated.push(validator.constructor.name);
         }
       }
-      if (!validated) {
+      if (validated.length === 0) {
+        core.info("No supported technology found"); 
         throw new Error("No supported technology found");
       }
-      core.info("Validation passed");
+      core.info("Validation passed with " + validated.join(", "));
+    } catch (err: any) {
+      error = true;
+      throw err;
     } finally {
-      if (!validated) {
+      if (error || validated.length === 0) {
         core.info("Validation failed");
       }
       core.endGroup();

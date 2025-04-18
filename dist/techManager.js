@@ -104,23 +104,29 @@ class TechManager {
     }
     validateTarget(targetDir) {
         return __awaiter(this, void 0, void 0, function* () {
-            let validated = false;
+            let validated = [];
+            let error = false;
             try {
                 core.startGroup("Validating...");
                 // Validate the target technology
                 for (const validator of this._validators) {
                     if (yield validator.isSupporting(targetDir)) {
                         yield validator.validate(targetDir);
-                        validated = true;
+                        validated.push(validator.constructor.name);
                     }
                 }
-                if (!validated) {
+                if (validated.length === 0) {
+                    core.info("No supported technology found");
                     throw new Error("No supported technology found");
                 }
-                core.info("Validation passed");
+                core.info("Validation passed with " + validated.join(", "));
+            }
+            catch (err) {
+                error = true;
+                throw err;
             }
             finally {
-                if (!validated) {
+                if (error || validated.length === 0) {
                     core.info("Validation failed");
                 }
                 core.endGroup();
