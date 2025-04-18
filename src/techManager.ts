@@ -46,7 +46,6 @@ export class TechManager {
       for (const validator of this._validators) {
         if (await validator.isSupporting(targetDir)) {
           await validator.install(source, targetDir);
-          // Add validator type to installed list
           installed.push(validator.constructor.name);
         }
       }
@@ -63,16 +62,11 @@ export class TechManager {
 
   public async validateTarget(targetDir: string): Promise<void> {
     let validated = [];
-    let hadError = false;
     try {
-      core.startGroup(`Validating target repository (${targetDir})`);
-      let lsContent = await fs.promises.readdir(targetDir);
-        core.info(`Target directory content: ${lsContent.join(", ")}`);
+      core.startGroup(`Validating...`);
       // Validate the target technology
       for (const validator of this._validators) {
-        core.info(`Checking ${validator.constructor.name}`);
         if (await validator.isSupporting(targetDir)) {
-          core.info(`Validating with ${validator.constructor.name}`);
           await validator.validate(targetDir);
           validated.push(validator.constructor.name);
         }
@@ -81,13 +75,9 @@ export class TechManager {
         throw new Error("No supported technology found");
       }
       core.info("Validation passed with " + validated.join(", "));
-    } catch (err: any) {
-        core.info(`Validation error: ${err}`);
-        hadError = true;
-      throw err;
     } finally {
-      if (hadError || validated.length === 0) {
-        core.info(`Validation failed (error: ${hadError})`);
+      if (validated.length === 0) {
+        core.info(`Validation failed`);
       }
       core.endGroup();
     }

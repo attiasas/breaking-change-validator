@@ -45,7 +45,6 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.TechManager = void 0;
 const core = __importStar(require("@actions/core"));
 const goLang_1 = require("./technnologies/goLang");
-const fs = __importStar(require("fs"));
 class TechManager {
     constructor() {
         this._validators = [];
@@ -89,7 +88,6 @@ class TechManager {
                 for (const validator of this._validators) {
                     if (yield validator.isSupporting(targetDir)) {
                         yield validator.install(source, targetDir);
-                        // Add validator type to installed list
                         installed.push(validator.constructor.name);
                     }
                 }
@@ -106,16 +104,11 @@ class TechManager {
     validateTarget(targetDir) {
         return __awaiter(this, void 0, void 0, function* () {
             let validated = [];
-            let hadError = false;
             try {
-                core.startGroup(`Validating target repository (${targetDir})`);
-                let lsContent = yield fs.promises.readdir(targetDir);
-                core.info(`Target directory content: ${lsContent.join(", ")}`);
+                core.startGroup(`Validating...`);
                 // Validate the target technology
                 for (const validator of this._validators) {
-                    core.info(`Checking ${validator.constructor.name}`);
                     if (yield validator.isSupporting(targetDir)) {
-                        core.info(`Validating with ${validator.constructor.name}`);
                         yield validator.validate(targetDir);
                         validated.push(validator.constructor.name);
                     }
@@ -125,14 +118,9 @@ class TechManager {
                 }
                 core.info("Validation passed with " + validated.join(", "));
             }
-            catch (err) {
-                core.info(`Validation error: ${err}`);
-                hadError = true;
-                throw err;
-            }
             finally {
-                if (hadError || validated.length === 0) {
-                    core.info(`Validation failed (error: ${hadError})`);
+                if (validated.length === 0) {
+                    core.info(`Validation failed`);
                 }
                 core.endGroup();
             }

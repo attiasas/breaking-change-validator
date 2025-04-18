@@ -61,7 +61,9 @@ function main() {
             // Prepare the target for the actions
             yield techManager.installTarget(techManager.source, targetDir);
             // Validate the target
-            yield runActionOnTarget(targetDir, results, techManager.validateTarget);
+            yield runActionOnTarget(targetDir, results, (targetDir) => __awaiter(this, void 0, void 0, function* () {
+                yield techManager.validateTarget(targetDir);
+            }));
             if (!inputs.runTargetTests()) {
                 core.debug("Skipping target tests");
                 return;

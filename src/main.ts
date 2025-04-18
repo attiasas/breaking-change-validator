@@ -17,7 +17,9 @@ async function main() {
     // Prepare the target for the actions
     await techManager.installTarget(techManager.source, targetDir);
     // Validate the target
-    await runActionOnTarget(targetDir, results, techManager.validateTarget);
+    await runActionOnTarget(targetDir, results, async (targetDir) => {
+      await techManager.validateTarget(targetDir);
+    });
     if (!inputs.runTargetTests()) {
       core.debug("Skipping target tests");
       return;
