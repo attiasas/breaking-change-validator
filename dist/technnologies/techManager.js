@@ -125,5 +125,8 @@ class TechManager {
 }
 exports.TechManager = TechManager;
 class TechValidator {
+    constructor() {
+        // Initialize the validator
+    }
 }
 exports.TechValidator = TechValidator;

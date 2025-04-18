@@ -77,6 +77,11 @@ export class TechManager {
 }
 
 export abstract class TechValidator {
+
+    constructor() {
+        // Initialize the validator
+    }
+    
     public abstract isSupporting(wd: string): Promise<boolean>;
     public abstract extractModule(wd: string): Promise<Module>;
     public abstract install(source: Module, wd: string): Promise<void>;

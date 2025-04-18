@@ -49,6 +49,9 @@ const exec = __importStar(require("@actions/exec"));
 const core = __importStar(require("@actions/core"));
 const techManager_1 = require("./techManager");
 class GolangHandler extends techManager_1.TechValidator {
+    constructor() {
+        super();
+    }
     isSupporting(wd) {
         return __awaiter(this, void 0, void 0, function* () {
             // Check if the directory contains a go.mod file
@@ -62,7 +65,7 @@ class GolangHandler extends techManager_1.TechValidator {
             const match = content.match(/^module\s+(.+)$/m);
             if (match) {
                 return {
-                    type: "golang",
+                    type: GolangHandler.GO_TYPE,
                     name: match[1],
                     path: mainGoMod,
                 };
@@ -90,3 +93,4 @@ class GolangHandler extends techManager_1.TechValidator {
 }
 exports.GolangHandler = GolangHandler;
 GolangHandler.DESCRIPTOR_FILE = "go.mod";
+GolangHandler.GO_TYPE = "golang";

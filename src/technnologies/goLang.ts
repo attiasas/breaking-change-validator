@@ -6,6 +6,11 @@ import { TechValidator, Module } from "./techManager";
 
 export class GolangHandler extends TechValidator {
     public static readonly DESCRIPTOR_FILE: string = "go.mod";
+    public static readonly GO_TYPE: string = "golang";
+
+    constructor() {
+        super();
+    }
     
     public async isSupporting(wd: string): Promise<boolean> {
         // Check if the directory contains a go.mod file
@@ -18,7 +23,7 @@ export class GolangHandler extends TechValidator {
         const match = content.match(/^module\s+(.+)$/m);
         if (match) {
             return {
-                type: "golang",
+                type: GolangHandler.GO_TYPE,
                 name: match[1],
                 path: mainGoMod,
             } as Module;
