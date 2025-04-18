@@ -106,7 +106,7 @@ class TechManager {
     validateTarget(targetDir) {
         return __awaiter(this, void 0, void 0, function* () {
             let validated = [];
-            let error = false;
+            let hadError = false;
             try {
                 core.startGroup(`Validating target repository (${targetDir})`);
                 let lsContent = yield fs.promises.readdir(targetDir);
@@ -121,18 +121,18 @@ class TechManager {
                     }
                 }
                 if (validated.length === 0) {
-                    core.info("No supported technology found");
                     throw new Error("No supported technology found");
                 }
                 core.info("Validation passed with " + validated.join(", "));
             }
             catch (err) {
-                error = true;
+                core.info(`Validation error: ${err}`);
+                hadError = true;
                 throw err;
             }
             finally {
-                if (error || validated.length === 0) {
-                    core.info("Validation failed");
+                if (hadError || validated.length === 0) {
+                    core.info(`Validation failed (error: ${hadError})`);
                 }
                 core.endGroup();
             }

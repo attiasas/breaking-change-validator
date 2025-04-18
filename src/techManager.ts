@@ -63,7 +63,7 @@ export class TechManager {
 
   public async validateTarget(targetDir: string): Promise<void> {
     let validated = [];
-    let error = false;
+    let hadError = false;
     try {
       core.startGroup(`Validating target repository (${targetDir})`);
       let lsContent = await fs.promises.readdir(targetDir);
@@ -78,16 +78,16 @@ export class TechManager {
         }
       }
       if (validated.length === 0) {
-        core.info("No supported technology found"); 
         throw new Error("No supported technology found");
       }
       core.info("Validation passed with " + validated.join(", "));
     } catch (err: any) {
-      error = true;
+        core.info(`Validation error: ${err}`);
+        hadError = true;
       throw err;
     } finally {
-      if (error || validated.length === 0) {
-        core.info("Validation failed");
+      if (hadError || validated.length === 0) {
+        core.info(`Validation failed (error: ${hadError})`);
       }
       core.endGroup();
     }
