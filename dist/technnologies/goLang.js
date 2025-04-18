@@ -45,8 +45,9 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.GolangHandler = void 0;
 const fs = __importStar(require("fs"));
 const path = __importStar(require("path"));
-const exec = __importStar(require("@actions/exec"));
+// import * as exec from "@actions/exec";
 const core = __importStar(require("@actions/core"));
+const utils_1 = require("../utils");
 class GolangHandler {
     isSupporting(wd) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -83,7 +84,9 @@ class GolangHandler {
     validate(wd) {
         return __awaiter(this, void 0, void 0, function* () {
             // Run Golang validation command
-            yield exec.exec("go", ["vet", "./..."], { cwd: wd });
+            core.info("Running Golang validation...");
+            core.info(yield utils_1.Utils.executeCmdAsync(["go", "vet", "./..."].join(' '), wd));
+            // await exec.exec("go", ["vet", "./..."], { cwd: wd });
         });
     }
 }

@@ -44,7 +44,8 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.Utils = exports.ActionInputs = void 0;
 const core = __importStar(require("@actions/core"));
-const exec = __importStar(require("@actions/exec"));
+// import * as exec from "@actions/exec";
+const exec = __importStar(require("child_process"));
 const path = __importStar(require("path"));
 const fs = __importStar(require("fs"));
 const os = __importStar(require("os"));
@@ -74,12 +75,14 @@ class Utils {
             try {
                 core.startGroup("Cloning target repository");
                 const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "validate-repo-"));
-                const cloneArgs = ["clone", inputs.repositoryUrl, tempDir];
+                //   const cloneArgs = ["clone", inputs.repositoryUrl, tempDir];
+                const cloneArgs = ["git", "clone", inputs.repositoryUrl, tempDir];
                 if (inputs.repositoryBranch) {
                     cloneArgs.splice(2, 0, "--branch", inputs.repositoryBranch, "--single-branch");
                 }
                 core.info(`Cloning ${inputs.repositoryUrl} ${inputs.repositoryBranch ? "(@" + inputs.repositoryBranch + ")" : ""} to ${tempDir}`);
-                yield exec.exec("git", cloneArgs);
+                // await exec.exec("git", cloneArgs);
+                core.info(yield this.executeCmdAsync(cloneArgs.join(" "), tempDir));
                 core.info(`Cloned target repository to ${tempDir}`);
                 return tempDir;
             }
@@ -94,7 +97,8 @@ class Utils {
                 core.startGroup("Running tests...");
                 const testCmd = core.getInput("test_command");
                 core.info(`Running: ${inputs.testCommand}`);
-                yield exec.exec("sh", ["-c", inputs.testCommand], { cwd: targetDir });
+                //   await exec.exec("sh", ["-c", inputs.testCommand], { cwd: targetDir });
+                core.info(yield this.executeCmdAsync(["sh", "-c", inputs.testCommand].join(" "), targetDir));
                 core.info("Tests passed");
             }
             finally {
@@ -102,5 +106,33 @@ class Utils {
             }
         });
     }
+    static executeCmdAsync(command_1, cwd_1, env_1) {
+        return __awaiter(this, arguments, void 0, function* (command, cwd, env, errIfStderrNotEmpty = true) {
+            return new Promise((resolve, reject) => {
+                try {
+                    const childProcess = exec.exec(command, {
+                        cwd: cwd,
+                        maxBuffer: Utils.SPAWN_PROCESS_BUFFER_SIZE,
+                        env: env,
+                    }, (error, stdout, stderr) => {
+                        if (error) {
+                            reject(error);
+                        }
+                        else {
+                            stderr.trim()
+                                ? errIfStderrNotEmpty
+                                    ? reject(new Error(stderr.trim()))
+                                    : resolve(stderr.trim())
+                                : resolve(stdout.trim());
+                        }
+                    });
+                }
+                catch (error) {
+                    reject(error);
+                }
+            });
+        });
+    }
 }
 exports.Utils = Utils;
+Utils.SPAWN_PROCESS_BUFFER_SIZE = 104857600; // 100MB

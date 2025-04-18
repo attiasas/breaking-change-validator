@@ -11,3 +11,11 @@ export interface Module {
     path: string;
     type: string;
 }
+
+export class ValidationError {
+    private _err: Error;
+    
+    constructor(err: Error) {
+        this._err = err;
+    }
+}
