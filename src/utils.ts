@@ -127,7 +127,9 @@ export class Utils {
         },
       },
     };
+    core.info(`Command: ${command} ${args ? args.join(" ") : ""}`);
     const exitCode = await exec.exec(command, args, options);
+    core.info(`Command done with exit code ${exitCode}`);
     if (exitCode !== 0) {
       throw new CommandError(cmd.join(" "), stderr, exitCode);
     }
