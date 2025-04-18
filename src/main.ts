@@ -19,8 +19,8 @@ async function main() {
     await validationManager.installTarget(targetDir);
     // Validate the target
     await validateTarget(validationManager, targetDir, results)
-      .then(async (validationFailed: boolean) => {
-        if (validationFailed || !inputs.runTargetTests()) {
+      .then(async (validated: boolean) => {
+        if (!validated || !inputs.runTargetTests()) {
           return;
         }
         // Run the target tests

@@ -61,8 +61,8 @@ function main() {
             yield validationManager.installTarget(targetDir);
             // Validate the target
             yield validateTarget(validationManager, targetDir, results)
-                .then((validationFailed) => __awaiter(this, void 0, void 0, function* () {
-                if (validationFailed || !inputs.runTargetTests()) {
+                .then((validated) => __awaiter(this, void 0, void 0, function* () {
+                if (!validated || !inputs.runTargetTests()) {
                     return;
                 }
                 // Run the target tests

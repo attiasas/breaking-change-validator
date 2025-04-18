@@ -135,9 +135,8 @@ class Utils {
                     },
                 },
             };
-            core.info(`Command: ${command} ${args ? args.join(" ") : ""}`);
+            core.debug(`Running command: ${command} ${args ? args.join(" ") : ""}`);
             const exitCode = yield exec.exec(command, args, options);
-            core.info(`Command done with exit code ${exitCode}`);
             if (exitCode !== 0) {
                 throw new CommandError(cmd.join(" "), stderr, exitCode, cmdOptions === null || cmdOptions === void 0 ? void 0 : cmdOptions.hint);
             }
