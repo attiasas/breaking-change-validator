@@ -47,11 +47,7 @@ const fs = __importStar(require("fs"));
 const path = __importStar(require("path"));
 const exec = __importStar(require("@actions/exec"));
 const core = __importStar(require("@actions/core"));
-const techManager_1 = require("./techManager");
-class GolangHandler extends techManager_1.TechValidator {
-    constructor() {
-        super();
-    }
+class GolangHandler {
     isSupporting(wd) {
         return __awaiter(this, void 0, void 0, function* () {
             // Check if the directory contains a go.mod file

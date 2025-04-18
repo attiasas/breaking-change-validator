@@ -45,7 +45,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const core = __importStar(require("@actions/core"));
 const utils_1 = require("./utils");
 const output_1 = require("./output");
-const techManager_1 = require("./technnologies/techManager");
+const techManager_1 = require("./techManager");
 function main() {
     return __awaiter(this, void 0, void 0, function* () {
         // Initialize the action

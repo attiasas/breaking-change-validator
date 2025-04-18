@@ -1,5 +1,6 @@
 import * as core from "@actions/core";
-import { GolangHandler } from "./goLang";
+import { GolangHandler } from "./technnologies/goLang";
+import { Module, TechValidator } from "./technnologies/techValidator";
 
 export class TechManager {
     private _validators: TechValidator[] = [];
@@ -76,20 +77,3 @@ export class TechManager {
     }
 }
 
-export abstract class TechValidator {
-
-    constructor() {
-        // Initialize the validator
-    }
-    
-    public abstract isSupporting(wd: string): Promise<boolean>;
-    public abstract extractModule(wd: string): Promise<Module>;
-    public abstract install(source: Module, wd: string): Promise<void>;
-    public abstract validate(wd: string): Promise<void>;
-}
-
-export interface Module {
-    name: string;
-    path: string;
-    type: string;
-}

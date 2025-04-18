@@ -2,16 +2,12 @@ import * as fs from "fs";
 import * as path from "path";
 import * as exec from "@actions/exec";
 import * as core from "@actions/core";
-import { TechValidator, Module } from "./techManager";
+import { Module, TechValidator } from "./techValidator";
 
-export class GolangHandler extends TechValidator {
+export class GolangHandler implements TechValidator {
     public static readonly DESCRIPTOR_FILE: string = "go.mod";
     public static readonly GO_TYPE: string = "golang";
 
-    constructor() {
-        super();
-    }
-    
     public async isSupporting(wd: string): Promise<boolean> {
         // Check if the directory contains a go.mod file
         return fs.existsSync(path.join(wd, GolangHandler.DESCRIPTOR_FILE));

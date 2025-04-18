@@ -42,9 +42,9 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.TechValidator = exports.TechManager = void 0;
+exports.TechManager = void 0;
 const core = __importStar(require("@actions/core"));
-const goLang_1 = require("./goLang");
+const goLang_1 = require("./technnologies/goLang");
 class TechManager {
     constructor() {
         this._validators = [];
@@ -124,9 +124,3 @@ class TechManager {
     }
 }
 exports.TechManager = TechManager;
-class TechValidator {
-    constructor() {
-        // Initialize the validator
-    }
-}
-exports.TechValidator = TechValidator;

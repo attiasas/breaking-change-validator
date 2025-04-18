@@ -1,7 +1,7 @@
 import * as core from "@actions/core";
 import { ActionInputs, Utils } from "./utils";
 import { ActionResults } from "./output";
-import { TechManager } from "./technnologies/techManager";
+import { TechManager } from "./techManager";
 
 async function main() {
   // Initialize the action
