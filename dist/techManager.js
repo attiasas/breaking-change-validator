@@ -107,7 +107,7 @@ class TechManager {
             let validated = [];
             let error = false;
             try {
-                core.startGroup("Validating...");
+                core.startGroup(`Validating target repository (${targetDir})`);
                 // Validate the target technology
                 for (const validator of this._validators) {
                     core.info(`Checking ${validator.constructor.name}`);
