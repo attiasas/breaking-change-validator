@@ -42,58 +42,51 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.GolangHandler = void 0;
+const fs = __importStar(require("fs"));
+const path = __importStar(require("path"));
+const exec = __importStar(require("@actions/exec"));
 const core = __importStar(require("@actions/core"));
-const utils_1 = require("./utils");
-const output_1 = require("./output");
-const techManager_1 = require("./technnologies/techManager");
-function main() {
-    return __awaiter(this, void 0, void 0, function* () {
-        // Initialize the action
-        const inputs = new utils_1.ActionInputs();
-        const results = new output_1.ActionResults();
-        const techManager = new techManager_1.TechManager();
-        core.info("Action Version: " + require("../package.json").version);
-        try {
-            // Instantiate the technology manager with the source directory
-            core.info(`Source Repository: ${yield techManager.init(inputs.sourceDir)}`);
-            // Clone the target repository
-            let targetDir = yield utils_1.Utils.cloneRepository(inputs);
-            core.info(`Cloned target repository to ${targetDir}`);
-            // Prepare the target for the actions
-            yield techManager.installTarget(techManager.source, targetDir);
-            // Validate the target
-            yield runActionOnTarget(targetDir, results, techManager.validateTarget);
-            if (!inputs.runTargetTests()) {
-                core.info("Skipping target tests");
-                return;
-            }
-            // Run the target tests
-            yield runActionOnTarget(targetDir, results, (targetDir) => __awaiter(this, void 0, void 0, function* () {
-                yield utils_1.Utils.runTests(inputs, targetDir);
-            }));
-        }
-        catch (error) {
-            results.AppendError(error);
-        }
-        finally {
-            reportResults(inputs, results);
-        }
-    });
-}
-function runActionOnTarget(targetDir, results, action) {
-    return __awaiter(this, void 0, void 0, function* () {
-        try {
-            yield action(targetDir);
-        }
-        catch (error) {
-            results.AppendError(error);
-        }
-    });
-}
-function reportResults(inputs, results) {
-    if (!results.hasErrors()) {
-        return;
+const techManager_1 = require("./techManager");
+class GolangHandler extends techManager_1.TechValidator {
+    isSupporting(wd) {
+        return __awaiter(this, void 0, void 0, function* () {
+            // Check if the directory contains a go.mod file
+            return fs.existsSync(path.join(wd, GolangHandler.DESCRIPTOR_FILE));
+        });
     }
-    core.setFailed(results.getErrorMessage());
+    extractModule(wd) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const mainGoMod = path.join(wd, GolangHandler.DESCRIPTOR_FILE);
+            const content = fs.readFileSync(mainGoMod, "utf8");
+            const match = content.match(/^module\s+(.+)$/m);
+            if (match) {
+                return {
+                    type: "golang",
+                    name: match[1],
+                    path: mainGoMod,
+                };
+            }
+            throw new Error("Could not parse module from go.mod");
+        });
+    }
+    install(source, wd) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (source.type !== "golang") {
+                throw new Error("Source Module type mismatch");
+            }
+            const goModPath = path.join(wd, GolangHandler.DESCRIPTOR_FILE);
+            const replaceLine = `replace ${source.name} => ${path.dirname(source.path)}`;
+            fs.appendFileSync(goModPath, `\n${replaceLine}\n`);
+            core.info(`Appended: '${replaceLine}' to ${goModPath}`);
+        });
+    }
+    validate(wd) {
+        return __awaiter(this, void 0, void 0, function* () {
+            // Run Golang validation command
+            yield exec.exec("go", ["vet", "./..."], { cwd: wd });
+        });
+    }
 }
-main();
+exports.GolangHandler = GolangHandler;
+GolangHandler.DESCRIPTOR_FILE = "go.mod";

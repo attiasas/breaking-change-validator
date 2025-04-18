@@ -1,7 +1,7 @@
 {
     "name": "@attiasas/breaking-change-validator",
-    "version": "0.1.0",
-    "description": "GitHub Action to validate depended Go repositories against changes in the main repository.",
+    "version": "1.0.0",
+    "description": "GitHub Action to validate depended repositories against changes in the main repository.",
     "main": "dist/main.js",
     "engines": {
         "npm": ">=10.0.0",
@@ -18,10 +18,13 @@
         "url": "git+https://github.com/attiasas/breaking-change-validator.git"
     },
     "keywords": [
-        "golang",
         "dependency",
+        "ci-cd",
         "breaking-change",
-        "validator"
+        "tests",
+        "development",
+        "validation",
+        "golang"
     ],
     "author": "Assaf Attias",
     "license": "MIT",
