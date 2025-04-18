@@ -1,6 +1,5 @@
 import * as core from "@actions/core";
-// import * as exec from "@actions/exec";
-import * as exec from "child_process";
+import * as exec from "@actions/exec";
 import * as path from "path";
 import * as fs from "fs";
 import * as os from "os";
@@ -33,9 +32,25 @@ export class ActionInputs {
   }
 }
 
-export class Utils {
-  public static readonly SPAWN_PROCESS_BUFFER_SIZE: number = 104857600; // 100MB
+export class CommandError extends Error {
+  readonly command: string;
+  readonly stderr: string;
+  readonly exitCode: number;
 
+  constructor(
+    command: string,
+    stderr: string,
+    exitCode: number,
+    message?: string,
+  ) {
+    super(message);
+    this.command = command;
+    this.stderr = stderr;
+    this.exitCode = exitCode;
+  }
+}
+
+export class Utils {
   public static async cloneRepository(inputs: ActionInputs): Promise<string> {
     try {
       core.startGroup("Cloning target repository");
@@ -54,8 +69,8 @@ export class Utils {
       core.info(
         `Cloning ${inputs.repositoryUrl} ${inputs.repositoryBranch ? "(@" + inputs.repositoryBranch + ")" : ""} to ${tempDir}`,
       );
-      // await exec.exec("git", cloneArgs);
-      core.info(await this.executeCmdAsync(cloneArgs.join(" "), tempDir));
+      //   await exec.exec("git", cloneArgs);
+      await Utils.runCommand(cloneArgs);
       core.info(`Cloned target repository to ${tempDir}`);
       return tempDir;
     } finally {
@@ -72,52 +87,46 @@ export class Utils {
       const testCmd = core.getInput("test_command");
       core.info(`Running: ${inputs.testCommand}`);
       //   await exec.exec("sh", ["-c", inputs.testCommand], { cwd: targetDir });
-      core.info(
-        await this.executeCmdAsync(
-          ["sh", "-c", inputs.testCommand].join(" "),
-          targetDir,
-        ),
-      );
+      await Utils.runCommand(["sh", "-c", inputs.testCommand], targetDir);
       core.info("Tests passed");
     } finally {
       core.endGroup();
     }
   }
 
-  public static async executeCmdAsync(
-    command: string,
+  public static async runCommand(
+    cmd: string[],
     cwd?: string,
-    env?: NodeJS.ProcessEnv | undefined,
-    errIfStderrNotEmpty: boolean = true,
+    env?: { [key: string]: string } | undefined,
+    silent: boolean = false,
   ): Promise<string> {
-    return new Promise<string>((resolve, reject) => {
-      try {
-        const childProcess: exec.ChildProcess = exec.exec(
-          command,
-          {
-            cwd: cwd,
-            maxBuffer: Utils.SPAWN_PROCESS_BUFFER_SIZE,
-            env: env,
-          } as exec.ExecOptions,
-          (
-            error: exec.ExecException | null,
-            stdout: string,
-            stderr: string,
-          ) => {
-            if (error) {
-              reject(error);
-            } else {
-              stderr.trim()
-                ? errIfStderrNotEmpty
-                  ? reject(new Error(stderr.trim()))
-                  : resolve(stderr.trim())
-                : resolve(stdout.trim());
-            }
-          },
-        );
-      } catch (error) {
-        reject(error);
-      }
-    });
+    if (cmd.length === 0 || cmd[0].length === 0) {
+      throw new Error("Command is empty");
+    }
+    let command = cmd[0];
+    let args: string[] | undefined = undefined;
+    if (cmd.length > 1) {
+      args = cmd.slice(1);
+    }
+    let stdout = "";
+    let stderr = "";
+    const options = {
+      cwd: cwd,
+      env: env,
+      silent: silent,
+      listeners: {
+        stdout: (data: Buffer) => {
+          stdout += data.toString();
+        },
+        stderr: (data: Buffer) => {
+          stderr += data.toString();
+        },
+      },
+    };
+    const exitCode = await exec.exec(command, args, options);
+    if (exitCode !== 0) {
+      throw new CommandError(cmd.join(" "), stderr, exitCode);
+    }
+    return stdout;
   }
 }

@@ -42,10 +42,9 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.Utils = exports.ActionInputs = void 0;
+exports.Utils = exports.CommandError = exports.ActionInputs = void 0;
 const core = __importStar(require("@actions/core"));
-// import * as exec from "@actions/exec";
-const exec = __importStar(require("child_process"));
+const exec = __importStar(require("@actions/exec"));
 const path = __importStar(require("path"));
 const fs = __importStar(require("fs"));
 const os = __importStar(require("os"));
@@ -69,6 +68,15 @@ ActionInputs.REPOSITORY_URL_ARG = "repository";
 ActionInputs.REPOSITORY_BRANCH_ARG = "branch";
 // The command to run the tests if any
 ActionInputs.TEST_COMMAND_ARG = "test_command";
+class CommandError extends Error {
+    constructor(command, stderr, exitCode, message) {
+        super(message);
+        this.command = command;
+        this.stderr = stderr;
+        this.exitCode = exitCode;
+    }
+}
+exports.CommandError = CommandError;
 class Utils {
     static cloneRepository(inputs) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -81,8 +89,8 @@ class Utils {
                     cloneArgs.splice(2, 0, "--branch", inputs.repositoryBranch, "--single-branch");
                 }
                 core.info(`Cloning ${inputs.repositoryUrl} ${inputs.repositoryBranch ? "(@" + inputs.repositoryBranch + ")" : ""} to ${tempDir}`);
-                // await exec.exec("git", cloneArgs);
-                core.info(yield this.executeCmdAsync(cloneArgs.join(" "), tempDir));
+                //   await exec.exec("git", cloneArgs);
+                yield Utils.runCommand(cloneArgs);
                 core.info(`Cloned target repository to ${tempDir}`);
                 return tempDir;
             }
@@ -98,7 +106,7 @@ class Utils {
                 const testCmd = core.getInput("test_command");
                 core.info(`Running: ${inputs.testCommand}`);
                 //   await exec.exec("sh", ["-c", inputs.testCommand], { cwd: targetDir });
-                core.info(yield this.executeCmdAsync(["sh", "-c", inputs.testCommand].join(" "), targetDir));
+                yield Utils.runCommand(["sh", "-c", inputs.testCommand], targetDir);
                 core.info("Tests passed");
             }
             finally {
@@ -106,33 +114,37 @@ class Utils {
             }
         });
     }
-    static executeCmdAsync(command_1, cwd_1, env_1) {
-        return __awaiter(this, arguments, void 0, function* (command, cwd, env, errIfStderrNotEmpty = true) {
-            return new Promise((resolve, reject) => {
-                try {
-                    const childProcess = exec.exec(command, {
-                        cwd: cwd,
-                        maxBuffer: Utils.SPAWN_PROCESS_BUFFER_SIZE,
-                        env: env,
-                    }, (error, stdout, stderr) => {
-                        if (error) {
-                            reject(error);
-                        }
-                        else {
-                            stderr.trim()
-                                ? errIfStderrNotEmpty
-                                    ? reject(new Error(stderr.trim()))
-                                    : resolve(stderr.trim())
-                                : resolve(stdout.trim());
-                        }
-                    });
-                }
-                catch (error) {
-                    reject(error);
-                }
-            });
+    static runCommand(cmd_1, cwd_1, env_1) {
+        return __awaiter(this, arguments, void 0, function* (cmd, cwd, env, silent = false) {
+            if (cmd.length === 0 || cmd[0].length === 0) {
+                throw new Error("Command is empty");
+            }
+            let command = cmd[0];
+            let args = undefined;
+            if (cmd.length > 1) {
+                args = cmd.slice(1);
+            }
+            let stdout = "";
+            let stderr = "";
+            const options = {
+                cwd: cwd,
+                env: env,
+                silent: silent,
+                listeners: {
+                    stdout: (data) => {
+                        stdout += data.toString();
+                    },
+                    stderr: (data) => {
+                        stderr += data.toString();
+                    },
+                },
+            };
+            const exitCode = yield exec.exec(command, args, options);
+            if (exitCode !== 0) {
+                throw new CommandError(cmd.join(" "), stderr, exitCode);
+            }
+            return stdout;
         });
     }
 }
 exports.Utils = Utils;
-Utils.SPAWN_PROCESS_BUFFER_SIZE = 104857600; // 100MB

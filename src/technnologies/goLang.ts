@@ -1,6 +1,6 @@
 import * as fs from "fs";
 import * as path from "path";
-// import * as exec from "@actions/exec";
+import * as exec from "@actions/exec";
 import * as core from "@actions/core";
 import { Module, TechValidator } from "./techValidator";
 import { Utils } from "../utils";
@@ -39,10 +39,9 @@ export class GolangHandler implements TechValidator {
     }
 
     public async validate(wd: string): Promise<void> {
-        // Run Golang validation command
-        core.info("Running Golang validation...");
-        core.info(await Utils.executeCmdAsync(["go","vet", "./..."].join(' '), wd));
+        core.info("Running go validation...");
         // await exec.exec("go", ["vet", "./..."], { cwd: wd });
+        await Utils.runCommand(["go", "vet", "./..."], wd);
     }
 
 }
