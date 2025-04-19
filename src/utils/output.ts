@@ -85,6 +85,8 @@ export enum OutputType {
 
 export class Output {
 
+  public static readonly ACTION_COMMENT_MARK: string = `[comment]: <> (BREAKING_CHANGE_VALIDATOR)`;
+
   public static readonly ACTION_ERROR_MSG: string = `⛔️ Validation issues detected in the target repository.`;
   public static readonly ACTION_SUCCESS_MSG: string = `✅ No validation issues detected in the target repository.`;
 

@@ -40,7 +40,7 @@ on:
 
 permissions:
   # required for the action to create comments on the PR
-  contents: write
+  pull-requests: write
 
 jobs:
   validate-depended-libraries:
@@ -59,12 +59,14 @@ jobs:
 
       - uses: attiasas/breaking-change-validator@v1
         env:
-          # Optional, signals the action to generate comments if issues detected and not resolved. The GitHub token is automatically generated for the job
-          COMMENT_GENERATION_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Optional, needed for some action operations (generating PR comments, remediation label)
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           repository: ${{ matrix.library.url }}
           branch: ${{ matrix.library.branch }}
           test_command: ${{ matrix.library.test_command }}
+          output_strategy: 'terminal,summary,comment'
+          remediation_label: 'validated'
 
 ```
 
@@ -73,11 +75,23 @@ jobs:
 
 ### Inputs
 
-| Name           | Description                                                               | Required | Default         |
-|----------------|---------------------------------------------------------------------------|----------|-----------------|
-| `repository`   | The clone URL of the dependent repository to validate.                    | Yes      | None            |
-| `branch`       | The branch of the dependent repository to validate.                       | No       | Default Branch  |
-| `test_command` | Optional shell command to run at the target repository with the changes.  | No       | None            |
+| Name                | Description                                                                                                              | Required | Default            |
+|---------------------|--------------------------------------------------------------------------------------------------------------------------|----------|--------------------|
+| `repository`        | The clone URL of the dependent repository to validate.                                                                   | Yes      | None               |
+| `branch`            | The branch of the dependent repository to validate.                                                                      | No       | Default Ref        |
+| `test_command`      | Optional shell command to run at the target repository with the changes.                                                 | No       | None               |
+| `output_strategy`   | Determines where validation results will be shown: `terminal`, `summary`, or `comment`. Comma-separated values allowed.  | No       | `terminal,summary` |
+| `remediation_label` | If provided and the label exists on the pull request, issues will be considered resolved and the check will pass.        | No       | None               |
+
+## 🧪 Issue Remediation
+
+### Remediation Label
+In order to resolve the issues raised by the action you can specify the `remediation_label` input.
+If provided, the action will check if the related pull request is labeled with this value and mark the issues as resolved.
+
+#### Preconditions
+
+`GITHUB_TOKEN` environment variable - GitHub token . You can utilize ${{ secrets.GITHUB_TOKEN }}, which is an automatically generated token by GitHub.
 
 ## 💬 Output 
 
@@ -91,7 +105,7 @@ If the action runs on a related PR, you can optionally configure the action to g
 
 #### Preconditions
 
-`COMMENT_GENERATION_TOKEN` - GitHub token with `contents: write` permission.
+`GITHUB_TOKEN` environment variable - GitHub token with `pull-requests: write` permission.
 
 You can utilize ${{ secrets.GITHUB_TOKEN }}, which is an automatically generated token by GitHub.
 

@@ -5,6 +5,7 @@ import * as fs from "fs";
 import * as os from "os";
 import * as github from "@actions/github";
 import { ActionInputs } from "./input";
+import { Output } from "./output";
 
 export class Utils {
   public static async cloneRepository(inputs: ActionInputs): Promise<string> {
@@ -50,7 +51,7 @@ export class Utils {
   public static async addCommentToPR(content: string, token?: string): Promise<boolean> {
     try {
       if (!token) {
-        throw new Error("GitHub token is required but not provided.");
+        throw new ErrorWithHint("GitHub token is required but not provided.", `Set the ${ActionInputs.SOURCE_GIT_TOKEN_ENV} environment variable.`);
       }
       const octokit = github.getOctokit(token);
       const context = github.context;
@@ -63,19 +64,86 @@ export class Utils {
       const pull_number = context.payload.pull_request.number;
 
       core.info(`Adding comment to PR #${pull_number} in ${owner}/${repo}`);
-      await octokit.rest.issues.createComment({
-        owner,
-        repo,
-        issue_number: pull_number,
-        body: content,
-      });
-
+      try {
+        await octokit.rest.issues.createComment({
+          owner,
+          repo,
+          issue_number: pull_number,
+          body: `\n\n${Output.ACTION_COMMENT_MARK}\n${content}`,
+        });
+      } catch (error: any) {
+        throw new ErrorWithHint(error.message, "Make sure the workflow contains `pull-requests: write` permission.");
+      }
       core.info("Comment added successfully.");
       return true;
     } catch (error: any) {
       core.warning(`Failed to add comment to PR: ${error.message}`);
       return false;
     }
+  }
+
+  public static async getPullRequestBranch(cloneUrl: string, prNumber: number, token?: string): Promise<string | undefined> {
+    try {
+      if (!token) {
+        throw new ErrorWithHint("GitHub token is required but not provided.", `Set the ${ActionInputs.SOURCE_GIT_TOKEN_ENV} environment variable.`);
+      }
+      const octokit = github.getOctokit(token);
+      const { owner, repo } = this.splitUrl(cloneUrl);
+      const { data: pullRequest } = await octokit.rest.pulls.get({
+        owner,
+        repo,
+        pull_number: prNumber,
+      });
+      return pullRequest.head.ref;
+    } catch (error: any) {
+      core.warning(`Failed to get pull request branch: ${error.message}`);
+      return undefined;
+    }
+  }
+
+  public static getCurrentPullRequestNumber(): number | undefined {
+    const context = github.context;
+    if (context.payload.pull_request) {
+      return context.payload.pull_request.number;
+    } else if (context.payload.issue) {
+      return context.payload.issue.number;
+    } else {
+      core.warning("No pull request or issue found in the context.");
+      return undefined;
+    }
+  }
+
+  public static async isLabelExists(label: string, token?: string): Promise<boolean> {
+    try {
+      if (!token) {
+        throw new ErrorWithHint("GitHub token is required but not provided.", `Set the ${ActionInputs.SOURCE_GIT_TOKEN_ENV} environment variable.`);
+      }
+      const octokit = github.getOctokit(token);
+      const context = github.context;
+      const { owner, repo } = context.repo;
+      const labels = await octokit.rest.issues.listLabelsForRepo({
+        owner,
+        repo,
+      });
+      const labelExists = labels.data.some((l) => l.name === label);
+      if (labelExists) {
+        core.info(`Label "${label}" exists in the repository.`);
+      } else {
+        core.info(`Label "${label}" does not exist in the repository.`);
+      }
+      return labelExists;
+    } catch (error: any) {
+      core.warning(`Failed to check if label exists: ${error.message}`);
+      return false;
+    }
+  }
+
+  public static splitUrl(url: string): { owner: string; repo: string } {
+    const urlObj = new URL(url);
+    const pathParts = urlObj.pathname.split("/");
+    const owner = pathParts[pathParts.length - 2];
+    const repo = pathParts[pathParts.length - 1].replace(/\.git$/, "");
+    return { owner, repo };
   }
 
   public static async addJobSummaryContent(content: string, override: boolean = false): Promise<boolean> {
