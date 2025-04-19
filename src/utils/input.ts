@@ -13,7 +13,7 @@ export class ActionInputs {
   public readonly repositoryBranch: string;
   public readonly testCommand: string;
   public readonly sourceDir: string;
-  public readonly outputStrategy: OutputType[] = [OutputType.JobSummary];
+  public readonly outputStrategy: OutputType[] = [OutputType.TerminalSummary, OutputType.JobSummary];
 
   constructor() {
     this.sourceDir = process.env.GITHUB_WORKSPACE || "";
@@ -42,6 +42,6 @@ export class ActionInputs {
     return JSON.stringify({
         runningCustomTests: this.shouldRunTargetTests(),
         outputStrategy: this.outputStrategy,
-    })
+    }, undefined, 1) + "\n";
   }
 }

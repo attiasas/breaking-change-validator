@@ -45,7 +45,7 @@ export class ValidationManager {
       // Install the target technology
       for (const validator of this._validators) {
         if (await validator.isSupporting(targetDir)) {
-          await validator.install(this.source, targetDir);
+          await validator.inject(this.source, targetDir);
           installed.push(validator.constructor.name);
         }
       }

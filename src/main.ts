@@ -1,8 +1,14 @@
 import * as core from "@actions/core";
 import { Utils } from "./utils/utils";
-import { ActionResults, Output, OutputType } from "./utils/output";
+import {
+  ActionErrorType,
+  ActionResults,
+  Output,
+  OutputType,
+} from "./utils/output";
 import { ActionInputs } from "./utils/input";
 import { ValidationManager } from "./validationManager";
+import path from "path";
 
 async function main() {
   try {
@@ -31,7 +37,7 @@ async function main() {
         await testTarget(inputs, targetDir, results);
       })
       .finally(() => {
-        reportResults(inputs, results);
+        reportResults(path.basename(targetDir), inputs, results);
       });
   } catch (error: any) {
     core.setFailed(error.message);
@@ -47,7 +53,7 @@ async function validateTarget(
     await validationManager.validateTarget(targetDir);
     return true;
   } catch (error: any) {
-    results.appendValidationError(error);
+    results.appendError(error, ActionErrorType.ValidationError);
     return false;
   }
 }
@@ -60,27 +66,44 @@ async function testTarget(
   try {
     await Utils.runTests(inputs, targetDir);
   } catch (error: any) {
-    results.appendTestError(error);
+    results.appendError(error, ActionErrorType.TestError);
   }
 }
 
-async function reportResults(inputs: ActionInputs, results: ActionResults) {
+async function reportResults(
+  target: string,
+  inputs: ActionInputs,
+  results: ActionResults,
+) {
   if (!results.hasErrors()) {
     core.info(Output.ACTION_SUCCESS_MSG);
     return;
   }
-  let summary = Output.generateSummary(results);
-  if (summary.length > 0) {
-    core.info(summary);
+  try {
+    core.startGroup("Generating output...");
+    if (inputs.requestedStrategy(OutputType.JobSummary)) {
+      await Utils.addJobSummaryContent(
+        Output.generateMarkdown(target, results),
+      );
+    }
+    if (inputs.requestedStrategy(OutputType.Comment)) {
+      if (results.hasNotResolvedErrors()) {
+        await Utils.addCommentToPR(Output.generateMarkdown(target, results));
+      } else {
+        core.info("Skipping comment generation: All errors are resolved.");
+      }
+    }
+  } finally {
+    core.endGroup();
   }
-  if (inputs.requestedStrategy(OutputType.JobSummary)) {
-    await Utils.addJobSummaryContent(Output.generateMarkdown(results));
-  }
-  if (inputs.requestedStrategy(OutputType.Comment)) {
-    await Utils.addCommentToPR(Output.generateSummary(results));
+  if (inputs.requestedStrategy(OutputType.TerminalSummary)) {
+    let summary = Output.generateSummary(results);
+    if (summary.length > 0) {
+      core.info(`\n\n${summary}`);
+    }
   }
   // Set the action msg
-  core.setFailed(results.getActionErrorMessage());
+  core.setFailed(Output.getActionFailedMessage(results));
 }
 
 main();

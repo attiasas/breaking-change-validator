@@ -41,12 +41,16 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 const core = __importStar(require("@actions/core"));
 const utils_1 = require("./utils/utils");
 const output_1 = require("./utils/output");
 const input_1 = require("./utils/input");
 const validationManager_1 = require("./validationManager");
+const path_1 = __importDefault(require("path"));
 function main() {
     return __awaiter(this, void 0, void 0, function* () {
         try {
@@ -71,7 +75,7 @@ function main() {
                 yield testTarget(inputs, targetDir, results);
             }))
                 .finally(() => {
-                reportResults(inputs, results);
+                reportResults(path_1.default.basename(targetDir), inputs, results);
             });
         }
         catch (error) {
@@ -86,7 +90,7 @@ function validateTarget(validationManager, targetDir, results) {
             return true;
         }
         catch (error) {
-            results.appendValidationError(error);
+            results.appendError(error, output_1.ActionErrorType.ValidationError);
             return false;
         }
     });
@@ -97,28 +101,41 @@ function testTarget(inputs, targetDir, results) {
             yield utils_1.Utils.runTests(inputs, targetDir);
         }
         catch (error) {
-            results.appendTestError(error);
+            results.appendError(error, output_1.ActionErrorType.TestError);
         }
     });
 }
-function reportResults(inputs, results) {
+function reportResults(target, inputs, results) {
     return __awaiter(this, void 0, void 0, function* () {
         if (!results.hasErrors()) {
             core.info(output_1.Output.ACTION_SUCCESS_MSG);
             return;
         }
-        let summary = output_1.Output.generateSummary(results);
-        if (summary.length > 0) {
-            core.info(summary);
+        try {
+            core.startGroup("Generating output...");
+            if (inputs.requestedStrategy(output_1.OutputType.JobSummary)) {
+                yield utils_1.Utils.addJobSummaryContent(output_1.Output.generateMarkdown(target, results));
+            }
+            if (inputs.requestedStrategy(output_1.OutputType.Comment)) {
+                if (results.hasNotResolvedErrors()) {
+                    yield utils_1.Utils.addCommentToPR(output_1.Output.generateMarkdown(target, results));
+                }
+                else {
+                    core.info("Skipping comment generation: All errors are resolved.");
+                }
+            }
         }
-        if (inputs.requestedStrategy(output_1.OutputType.JobSummary)) {
-            yield utils_1.Utils.addJobSummaryContent(output_1.Output.generateMarkdown(results));
+        finally {
+            core.endGroup();
         }
-        if (inputs.requestedStrategy(output_1.OutputType.Comment)) {
-            yield utils_1.Utils.addCommentToPR(output_1.Output.generateSummary(results));
+        if (inputs.requestedStrategy(output_1.OutputType.TerminalSummary)) {
+            let summary = output_1.Output.generateSummary(results);
+            if (summary.length > 0) {
+                core.info(`\n\n${summary}`);
+            }
         }
         // Set the action msg
-        core.setFailed(results.getActionErrorMessage());
+        core.setFailed(output_1.Output.getActionFailedMessage(results));
     });
 }
 main();

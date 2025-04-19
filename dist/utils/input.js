@@ -38,7 +38,7 @@ const core = __importStar(require("@actions/core"));
 const output_1 = require("./output");
 class ActionInputs {
     constructor() {
-        this.outputStrategy = [output_1.OutputType.JobSummary];
+        this.outputStrategy = [output_1.OutputType.TerminalSummary, output_1.OutputType.JobSummary];
         this.sourceDir = process.env.GITHUB_WORKSPACE || "";
         // Target config
         this.repositoryUrl = core.getInput(ActionInputs.REPOSITORY_URL_ARG, {
@@ -62,7 +62,7 @@ class ActionInputs {
         return JSON.stringify({
             runningCustomTests: this.shouldRunTargetTests(),
             outputStrategy: this.outputStrategy,
-        });
+        }, undefined, 1) + "\n";
     }
 }
 exports.ActionInputs = ActionInputs;

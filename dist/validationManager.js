@@ -88,7 +88,7 @@ class ValidationManager {
                 // Install the target technology
                 for (const validator of this._validators) {
                     if (yield validator.isSupporting(targetDir)) {
-                        yield validator.install(this.source, targetDir);
+                        yield validator.inject(this.source, targetDir);
                         installed.push(validator.constructor.name);
                     }
                 }

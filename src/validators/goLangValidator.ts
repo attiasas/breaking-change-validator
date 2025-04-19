@@ -27,7 +27,7 @@ export class GolangValidator implements TechValidator {
         throw new Error("Could not parse module from go.mod");
     }
 
-    public async install(source: Module, wd: string): Promise<void> {
+    public async inject(source: Module, wd: string): Promise<void> {
         if (source.type !== "golang") {
             throw new Error("Source Module type mismatch");
         }

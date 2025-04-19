@@ -69,7 +69,7 @@ class GolangValidator {
             throw new Error("Could not parse module from go.mod");
         });
     }
-    install(source, wd) {
+    inject(source, wd) {
         return __awaiter(this, void 0, void 0, function* () {
             if (source.type !== "golang") {
                 throw new Error("Source Module type mismatch");
