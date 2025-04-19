@@ -132,7 +132,7 @@ export class Output {
     return out;
   }
 
-  public static getIssueTypeRowString(type: ActionErrorType): string {
+  private static getIssueTypeRowString(type: ActionErrorType): string {
     // ValidationError is the most character long type, padding the others to match its length for better readability
     let padding = " ".repeat(ActionErrorType.ValidationError.length - type.length);
     return `[${type}]` + padding;
@@ -173,7 +173,7 @@ export class Output {
     return `${title}\n\n${table}`;
   }
 
-  public static getIssueDetailsString(error: ActionError): string {
+  private static getIssueDetailsString(error: ActionError): string {
     let details = "";
     if (error.hint && !error.isResolved()) {
       // Display hint only if the error is not resolved
@@ -183,12 +183,12 @@ export class Output {
       details += this.getDetailsTag("🧹 Remediation Evidence", error.remediationEvidences.reduce((acc, evidence) => acc + `<br> * ${this.wrapStringWithQuote(evidence)}`, ""));
     }
     if (error.stdErr && error.stdErr.length > 0) {
-      details += this.getDetailsTag("🗯️ StdErr", this.getStdErrString(error.stdErr));
+      details += this.getDetailsTag("🗯️ Error", this.getStdErrString(error.stdErr));
     }
     return details;
   }
 
-  public static getStdErrString(raw: string, limitLines: number = 0): string {
+  private static getStdErrString(raw: string, limitLines: number = 0): string {
     let out = "";
     let parsedLines = 0;
     for (const line of raw.split("\n")) {
@@ -207,15 +207,15 @@ export class Output {
     return out;
   }
 
-  public static getIssueCountTitleString(activeCount: number, resolvedCount: number): string {
+  private static getIssueCountTitleString(activeCount: number, resolvedCount: number): string {
     if (activeCount === 0 && resolvedCount === 0) {
       return "";
     }
     let out = ` - Found `;
     if (resolvedCount == 0 || activeCount == 0) {
-      return out + `${this.getColoredString(activeCount, resolvedCount == 0 ? Color.IssueColor : Color.ResolvedColor)} Issues.${activeCount == 0 ? " All resolved" : ""}`;
+      return out + `${this.getColoredTag(activeCount, resolvedCount == 0 ? Color.IssueColor : Color.ResolvedColor)} Issues.${activeCount == 0 ? " All resolved" : ""}`;
     }
-    return out + `${this.getColoredString(activeCount + resolvedCount, Color.MixedColor)} Issues. ( ${this.getColoredString(activeCount, Color.IssueColor)} active, ${this.getColoredString(resolvedCount, Color.ResolvedColor)} resolved )`; 
+    return out + `${this.getColoredTag(activeCount + resolvedCount, Color.MixedColor)} Issues. ( ${this.getColoredTag(activeCount, Color.IssueColor)} active, ${this.getColoredTag(resolvedCount, Color.ResolvedColor)} resolved )`; 
   }
 
   private static wrapStringWithQuote(str: string): string {
@@ -226,7 +226,7 @@ export class Output {
     return `<details><summary>${title}</summary><p>${details}</p></details>`;
   }
 
-  private static getColoredString(str: number, color: Color): string {
+  private static getColoredTag(str: number, color: Color): string {
     return `<span style="color:${color}">${str}</span>`;
   }
 }

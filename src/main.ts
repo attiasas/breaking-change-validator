@@ -88,7 +88,10 @@ async function reportResults(
     }
     if (inputs.requestedStrategy(OutputType.Comment)) {
       if (results.hasNotResolvedErrors()) {
-        await Utils.addCommentToPR(Output.generateMarkdown(target, results));
+        await Utils.addCommentToPR(
+          Output.generateMarkdown(target, results),
+          inputs.gitHubToken,
+        );
       } else {
         core.info("Skipping comment generation: All errors are resolved.");
       }

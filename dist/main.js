@@ -118,7 +118,7 @@ function reportResults(target, inputs, results) {
             }
             if (inputs.requestedStrategy(output_1.OutputType.Comment)) {
                 if (results.hasNotResolvedErrors()) {
-                    yield utils_1.Utils.addCommentToPR(output_1.Output.generateMarkdown(target, results));
+                    yield utils_1.Utils.addCommentToPR(output_1.Output.generateMarkdown(target, results), inputs.gitHubToken);
                 }
                 else {
                     core.info("Skipping comment generation: All errors are resolved.");

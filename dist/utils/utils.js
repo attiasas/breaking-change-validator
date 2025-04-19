@@ -83,10 +83,9 @@ class Utils {
             }
         });
     }
-    static addCommentToPR(content) {
+    static addCommentToPR(content, token) {
         return __awaiter(this, void 0, void 0, function* () {
             try {
-                let token = process.env.GITHUB_TOKEN;
                 if (!token) {
                     throw new Error("GitHub token is required but not provided.");
                 }

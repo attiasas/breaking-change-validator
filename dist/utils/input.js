@@ -48,8 +48,16 @@ class ActionInputs {
         // Test config
         this.testCommand = core.getInput(ActionInputs.TEST_COMMAND_ARG);
         // Output config
-        if ((process.env.GENERATE_VALIDATION_COMMENT || "false").toLowerCase() === "true") {
-            this.outputStrategy.push(output_1.OutputType.Comment);
+        let tokenForCommentGeneration = process.env.COMMENT_GENERATION_TOKEN;
+        if (tokenForCommentGeneration) {
+            // Optional token for comment generation
+            if (tokenForCommentGeneration.length > 0) {
+                this.gitHubToken = tokenForCommentGeneration;
+                this.outputStrategy.push(output_1.OutputType.Comment);
+            }
+            else {
+                core.warning("COMMENT_GENERATION_TOKEN is empty. Comment generation will be skipped.");
+            }
         }
     }
     shouldRunTargetTests() {
@@ -60,8 +68,11 @@ class ActionInputs {
     }
     toString() {
         return JSON.stringify({
-            runningCustomTests: this.shouldRunTargetTests(),
-            outputStrategy: this.outputStrategy,
+            actions: {
+                validation: "true",
+                customTestCommand: this.shouldRunTargetTests(),
+            },
+            output: this.outputStrategy,
         }, undefined, 1) + "\n";
     }
 }

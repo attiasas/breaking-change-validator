@@ -47,9 +47,8 @@ export class Utils {
     }
   }
 
-  public static async addCommentToPR(content: string): Promise<boolean> {
+  public static async addCommentToPR(content: string, token?: string): Promise<boolean> {
     try {
-      let token = process.env.GITHUB_TOKEN;
       if (!token) {
         throw new Error("GitHub token is required but not provided.");
       }

@@ -167,7 +167,7 @@ class Output {
             details += this.getDetailsTag("🧹 Remediation Evidence", error.remediationEvidences.reduce((acc, evidence) => acc + `<br> * ${this.wrapStringWithQuote(evidence)}`, ""));
         }
         if (error.stdErr && error.stdErr.length > 0) {
-            details += this.getDetailsTag("🗯️ StdErr", this.getStdErrString(error.stdErr));
+            details += this.getDetailsTag("🗯️ Error", this.getStdErrString(error.stdErr));
         }
         return details;
     }
@@ -195,9 +195,9 @@ class Output {
         }
         let out = ` - Found `;
         if (resolvedCount == 0 || activeCount == 0) {
-            return out + `${this.getColoredString(activeCount, resolvedCount == 0 ? Color.IssueColor : Color.ResolvedColor)} Issues.${activeCount == 0 ? " All resolved" : ""}`;
+            return out + `${this.getColoredTag(activeCount, resolvedCount == 0 ? Color.IssueColor : Color.ResolvedColor)} Issues.${activeCount == 0 ? " All resolved" : ""}`;
         }
-        return out + `${this.getColoredString(activeCount + resolvedCount, Color.MixedColor)} Issues. ( ${this.getColoredString(activeCount, Color.IssueColor)} active, ${this.getColoredString(resolvedCount, Color.ResolvedColor)} resolved )`;
+        return out + `${this.getColoredTag(activeCount + resolvedCount, Color.MixedColor)} Issues. ( ${this.getColoredTag(activeCount, Color.IssueColor)} active, ${this.getColoredTag(resolvedCount, Color.ResolvedColor)} resolved )`;
     }
     static wrapStringWithQuote(str) {
         return "`" + str + "`";
@@ -205,7 +205,7 @@ class Output {
     static getDetailsTag(title, details) {
         return `<details><summary>${title}</summary><p>${details}</p></details>`;
     }
-    static getColoredString(str, color) {
+    static getColoredTag(str, color) {
         return `<span style="color:${color}">${str}</span>`;
     }
 }
