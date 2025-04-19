@@ -41,16 +41,12 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 const core = __importStar(require("@actions/core"));
 const utils_1 = require("./utils/utils");
 const output_1 = require("./utils/output");
 const input_1 = require("./utils/input");
 const validationManager_1 = require("./validationManager");
-const path_1 = __importDefault(require("path"));
 function main() {
     return __awaiter(this, void 0, void 0, function* () {
         try {
@@ -75,7 +71,7 @@ function main() {
                 yield testTarget(inputs, targetDir, results);
             }))
                 .finally(() => {
-                reportResults(path_1.default.basename(targetDir), inputs, results);
+                reportResults(inputs.repositoryName, inputs, results);
             });
         }
         catch (error) {
@@ -131,7 +127,7 @@ function reportResults(target, inputs, results) {
         if (inputs.requestedStrategy(output_1.OutputType.TerminalSummary)) {
             let summary = output_1.Output.generateSummary(results);
             if (summary.length > 0) {
-                core.info(`\n\n${summary}`);
+                core.info(`\n${summary}\n`);
             }
         }
         // Set the action msg

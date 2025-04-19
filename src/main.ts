@@ -37,7 +37,7 @@ async function main() {
         await testTarget(inputs, targetDir, results);
       })
       .finally(() => {
-        reportResults(path.basename(targetDir), inputs, results);
+        reportResults(inputs.repositoryName, inputs, results);
       });
   } catch (error: any) {
     core.setFailed(error.message);
@@ -102,7 +102,7 @@ async function reportResults(
   if (inputs.requestedStrategy(OutputType.TerminalSummary)) {
     let summary = Output.generateSummary(results);
     if (summary.length > 0) {
-      core.info(`\n\n${summary}`);
+      core.info(`\n${summary}\n`);
     }
   }
   // Set the action msg

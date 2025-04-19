@@ -48,13 +48,20 @@ export class ActionInputs {
     return this.outputStrategy.includes(type);
   }
 
+  public get repositoryName(): string {
+    const url = new URL(this.repositoryUrl);
+    const pathParts = url.pathname.split("/");
+    const repoName = pathParts[pathParts.length - 1];
+    return repoName.replace(/\.git$/, "");
+  }
+
   public toString(): string {
     return JSON.stringify({
         actions: {
           validation: "true",
           customTestCommand: this.shouldRunTargetTests(),
         },
-        output: this.outputStrategy,
+        output: `[${this.outputStrategy.map((type) => type.toString()).join(", ")}]`,
     }, undefined, 1) + "\n";
   }
 }
