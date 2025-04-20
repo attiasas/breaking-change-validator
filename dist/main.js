@@ -47,6 +47,7 @@ const utils_1 = require("./utils/utils");
 const output_1 = require("./utils/output");
 const input_1 = require("./utils/input");
 const validationManager_1 = require("./validationManager");
+const remediationManager_1 = require("./remediationManager");
 function main() {
     return __awaiter(this, void 0, void 0, function* () {
         try {
@@ -62,17 +63,15 @@ function main() {
             // Prepare the target for the actions
             yield validationManager.installTarget(targetDir);
             // Validate the target
-            yield validateTarget(validationManager, targetDir, results)
-                .then((validated) => __awaiter(this, void 0, void 0, function* () {
-                if (!validated || !inputs.shouldRunTargetTests()) {
-                    return;
-                }
-                // Run the target tests
+            if ((yield validateTarget(validationManager, targetDir, results)) &&
+                inputs.shouldRunTargetTests()) {
+                // Run the target tests only if the validation passed
                 yield testTarget(inputs, targetDir, results);
-            }))
-                .finally(() => {
-                reportResults(inputs.repositoryName, inputs, results);
-            });
+            }
+            // Check if the issues are resolved
+            yield checkRemediation(inputs, results);
+            // Output the results
+            reportResults(inputs.repositoryName, inputs, results);
         }
         catch (error) {
             core.setFailed(error.message);
@@ -99,6 +98,19 @@ function testTarget(inputs, targetDir, results) {
         catch (error) {
             results.appendError(error, output_1.ActionErrorType.TestError);
         }
+    });
+}
+function checkRemediation(inputs, results) {
+    return __awaiter(this, void 0, void 0, function* () {
+        if (!results.hasActionErrors()) {
+            core.debug("No issues found in the target repository, no need to check remediation.");
+            return;
+        }
+        if (!inputs.shouldCheckRemediation()) {
+            core.debug("Skipping remediation check.");
+            return;
+        }
+        yield remediationManager_1.RemediationManager.checkRemediation(results, inputs.hasRemediationLabel() ? inputs.remediationLabel : undefined, inputs.gitHubToken);
     });
 }
 function reportResults(target, inputs, results) {

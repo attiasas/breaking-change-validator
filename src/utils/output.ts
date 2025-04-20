@@ -90,6 +90,11 @@ export class Output {
   public static readonly ACTION_ERROR_MSG: string = `⛔️ Validation issues detected in the target repository.`;
   public static readonly ACTION_SUCCESS_MSG: string = `✅ No validation issues detected in the target repository.`;
 
+
+  public static getRemediationLabelEvidenceString(label: string) {
+    return `🏷️ [Found ${this.wrapStringWithQuote(label)} label]`;
+  }
+  
   private static getStatusIcon(isResolved: boolean): string {
     return isResolved ? "✅" : "⚠️";
   }

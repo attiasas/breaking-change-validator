@@ -49,6 +49,8 @@ const path = __importStar(require("path"));
 const fs = __importStar(require("fs"));
 const os = __importStar(require("os"));
 const github = __importStar(require("@actions/github"));
+const input_1 = require("./input");
+const output_1 = require("./output");
 class Utils {
     static cloneRepository(inputs) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -87,7 +89,7 @@ class Utils {
         return __awaiter(this, void 0, void 0, function* () {
             try {
                 if (!token) {
-                    throw new Error("GitHub token is required but not provided.");
+                    throw new ErrorWithHint("GitHub token is required but not provided.", `Set the ${input_1.ActionInputs.SOURCE_GIT_TOKEN_ENV} environment variable.`);
                 }
                 const octokit = github.getOctokit(token);
                 const context = github.context;
@@ -97,12 +99,17 @@ class Utils {
                 const { owner, repo } = context.repo;
                 const pull_number = context.payload.pull_request.number;
                 core.info(`Adding comment to PR #${pull_number} in ${owner}/${repo}`);
-                yield octokit.rest.issues.createComment({
-                    owner,
-                    repo,
-                    issue_number: pull_number,
-                    body: content,
-                });
+                try {
+                    yield octokit.rest.issues.createComment({
+                        owner,
+                        repo,
+                        issue_number: pull_number,
+                        body: `\n\n${output_1.Output.ACTION_COMMENT_MARK}\n${content}`,
+                    });
+                }
+                catch (error) {
+                    throw new ErrorWithHint(error.message, "Make sure the workflow contains `pull-requests: write` permission.");
+                }
                 core.info("Comment added successfully.");
                 return true;
             }
@@ -111,6 +118,75 @@ class Utils {
                 return false;
             }
         });
+    }
+    static getPullRequestBranch(cloneUrl, prNumber, token) {
+        return __awaiter(this, void 0, void 0, function* () {
+            try {
+                if (!token) {
+                    throw new ErrorWithHint("GitHub token is required but not provided.", `Set the ${input_1.ActionInputs.SOURCE_GIT_TOKEN_ENV} environment variable.`);
+                }
+                const octokit = github.getOctokit(token);
+                const { owner, repo } = this.splitUrl(cloneUrl);
+                const { data: pullRequest } = yield octokit.rest.pulls.get({
+                    owner,
+                    repo,
+                    pull_number: prNumber,
+                });
+                return pullRequest.head.ref;
+            }
+            catch (error) {
+                core.warning(`Failed to get pull request branch: ${error.message}`);
+                return undefined;
+            }
+        });
+    }
+    static getCurrentPullRequestNumber() {
+        const context = github.context;
+        if (context.payload.pull_request) {
+            return context.payload.pull_request.number;
+        }
+        else if (context.payload.issue) {
+            return context.payload.issue.number;
+        }
+        else {
+            core.warning("No pull request or issue found in the context.");
+            return undefined;
+        }
+    }
+    static isLabelExists(label, token) {
+        return __awaiter(this, void 0, void 0, function* () {
+            try {
+                if (!token) {
+                    throw new ErrorWithHint("GitHub token is required but not provided.", `Set the ${input_1.ActionInputs.SOURCE_GIT_TOKEN_ENV} environment variable.`);
+                }
+                const octokit = github.getOctokit(token);
+                const context = github.context;
+                const { owner, repo } = context.repo;
+                const labels = yield octokit.rest.issues.listLabelsForRepo({
+                    owner,
+                    repo,
+                });
+                const labelExists = labels.data.some((l) => l.name === label);
+                if (labelExists) {
+                    core.info(`Label "${label}" exists in the repository.`);
+                }
+                else {
+                    core.info(`Label "${label}" does not exist in the repository.`);
+                }
+                return labelExists;
+            }
+            catch (error) {
+                core.warning(`Failed to check if label exists: ${error.message}`);
+                return false;
+            }
+        });
+    }
+    static splitUrl(url) {
+        const urlObj = new URL(url);
+        const pathParts = urlObj.pathname.split("/");
+        const owner = pathParts[pathParts.length - 2];
+        const repo = pathParts[pathParts.length - 1].replace(/\.git$/, "");
+        return { owner, repo };
     }
     static addJobSummaryContent(content_1) {
         return __awaiter(this, arguments, void 0, function* (content, override = false) {

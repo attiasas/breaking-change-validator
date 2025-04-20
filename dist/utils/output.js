@@ -78,6 +78,9 @@ var OutputType;
     OutputType["Comment"] = "PR Comment";
 })(OutputType || (exports.OutputType = OutputType = {}));
 class Output {
+    static getRemediationLabelEvidenceString(label) {
+        return `🏷️ [Found ${this.wrapStringWithQuote(label)} label]`;
+    }
     static getStatusIcon(isResolved) {
         return isResolved ? "✅" : "⚠️";
     }
@@ -210,6 +213,7 @@ class Output {
     }
 }
 exports.Output = Output;
+Output.ACTION_COMMENT_MARK = `[comment]: <> (BREAKING_CHANGE_VALIDATOR)`;
 Output.ACTION_ERROR_MSG = `⛔️ Validation issues detected in the target repository.`;
 Output.ACTION_SUCCESS_MSG = `✅ No validation issues detected in the target repository.`;
 var Color;

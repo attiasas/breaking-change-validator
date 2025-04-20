@@ -36,9 +36,10 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.ActionInputs = void 0;
 const core = __importStar(require("@actions/core"));
 const output_1 = require("./output");
+const utils_1 = require("./utils");
 class ActionInputs {
     constructor() {
-        this.outputStrategy = [output_1.OutputType.TerminalSummary, output_1.OutputType.JobSummary];
+        this.outputStrategy = [];
         this.sourceDir = process.env.GITHUB_WORKSPACE || "";
         // Target config
         this.repositoryUrl = core.getInput(ActionInputs.REPOSITORY_URL_ARG, {
@@ -48,16 +49,34 @@ class ActionInputs {
         // Test config
         this.testCommand = core.getInput(ActionInputs.TEST_COMMAND_ARG);
         // Output config
-        let tokenForCommentGeneration = process.env.COMMENT_GENERATION_TOKEN;
-        if (tokenForCommentGeneration) {
-            // Optional token for comment generation
-            if (tokenForCommentGeneration.length > 0) {
-                this.gitHubToken = tokenForCommentGeneration;
-                this.outputStrategy.push(output_1.OutputType.Comment);
+        const outputStrategy = core.getInput(ActionInputs.OUTPUT_STRATEGY_ARG);
+        if (outputStrategy) {
+            const outputTypes = outputStrategy.split(",").map((type) => type.trim());
+            this.outputStrategy = outputTypes.map((type) => ActionInputs.toOutputType(type));
+        }
+        // Remediation config
+        this.remediationLabel = core.getInput(ActionInputs.REMEDIATION_LABEL_ARG);
+        // Github token for optional operations
+        this.gitHubToken = process.env[ActionInputs.SOURCE_GIT_TOKEN_ENV];
+        if (!this.gitHubToken || this.gitHubToken.length === 0) {
+            if (this.requestedStrategy(output_1.OutputType.Comment)) {
+                throw new utils_1.ErrorWithHint(`GitHub token is required but not provided for comment generation.`, `Set the ${ActionInputs.SOURCE_GIT_TOKEN_ENV} environment variable with "pull_request: write" permission.`);
             }
-            else {
-                core.warning("COMMENT_GENERATION_TOKEN is empty. Comment generation will be skipped.");
+            if (this.hasRemediationLabel()) {
+                throw new utils_1.ErrorWithHint(`GitHub token is required but not provided for label remediation.`, `Set the ${ActionInputs.SOURCE_GIT_TOKEN_ENV} environment variable.`);
             }
+        }
+    }
+    static toOutputType(type) {
+        switch (type.toLowerCase()) {
+            case "terminal":
+                return output_1.OutputType.TerminalSummary;
+            case "summary":
+                return output_1.OutputType.JobSummary;
+            case "comment":
+                return output_1.OutputType.Comment;
+            default:
+                throw new utils_1.ErrorWithHint(`Invalid output type: ${type}`, `must be one of [terminal, summary, comment]`);
         }
     }
     shouldRunTargetTests() {
@@ -66,6 +85,12 @@ class ActionInputs {
     requestedStrategy(type) {
         return this.outputStrategy.includes(type);
     }
+    hasRemediationLabel() {
+        return this.remediationLabel.length > 0;
+    }
+    shouldCheckRemediation() {
+        return this.hasRemediationLabel() && this.gitHubToken !== undefined;
+    }
     get repositoryName() {
         const url = new URL(this.repositoryUrl);
         const pathParts = url.pathname.split("/");
@@ -73,12 +98,23 @@ class ActionInputs {
         return repoName.replace(/\.git$/, "");
     }
     toString() {
+        let remediation = undefined;
+        if (this.hasRemediationLabel()) {
+            remediation = {
+                label: this.remediationLabel,
+            };
+        }
+        let output = undefined;
+        if (this.outputStrategy.length > 0) {
+            output = `[${this.outputStrategy.map((type) => type.toString()).join(", ")}]`;
+        }
         return JSON.stringify({
             actions: {
                 validation: "true",
                 customTestCommand: this.shouldRunTargetTests(),
             },
-            output: `[${this.outputStrategy.map((type) => type.toString()).join(", ")}]`,
+            output: output,
+            remediation: remediation,
         }, undefined, 1) + "\n";
     }
 }
@@ -89,3 +125,9 @@ ActionInputs.REPOSITORY_URL_ARG = "repository";
 ActionInputs.REPOSITORY_BRANCH_ARG = "branch";
 // The command to run the tests if any
 ActionInputs.TEST_COMMAND_ARG = "test_command";
+// Array, comma delimited, The strategy to use for output (terminal, job summary, comment)
+ActionInputs.OUTPUT_STRATEGY_ARG = "output_strategy";
+// If provided and the label exists, the action will consider the issues as resolved
+ActionInputs.REMEDIATION_LABEL_ARG = "remediation_label";
+// The environment variable to use for the GitHub token
+ActionInputs.SOURCE_GIT_TOKEN_ENV = "GITHUB_TOKEN";

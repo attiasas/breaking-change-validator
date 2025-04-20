@@ -8,7 +8,7 @@ import {
 } from "./utils/output";
 import { ActionInputs } from "./utils/input";
 import { ValidationManager } from "./validationManager";
-import path from "path";
+import { RemediationManager } from "./remediationManager";
 
 async function main() {
   try {
@@ -28,17 +28,17 @@ async function main() {
     // Prepare the target for the actions
     await validationManager.installTarget(targetDir);
     // Validate the target
-    await validateTarget(validationManager, targetDir, results)
-      .then(async (validated: boolean) => {
-        if (!validated || !inputs.shouldRunTargetTests()) {
-          return;
-        }
-        // Run the target tests
-        await testTarget(inputs, targetDir, results);
-      })
-      .finally(() => {
-        reportResults(inputs.repositoryName, inputs, results);
-      });
+    if (
+      (await validateTarget(validationManager, targetDir, results)) &&
+      inputs.shouldRunTargetTests()
+    ) {
+      // Run the target tests only if the validation passed
+      await testTarget(inputs, targetDir, results);
+    }
+    // Check if the issues are resolved
+    await checkRemediation(inputs, results);
+    // Output the results
+    reportResults(inputs.repositoryName, inputs, results);
   } catch (error: any) {
     core.setFailed(error.message);
   }
@@ -68,6 +68,24 @@ async function testTarget(
   } catch (error: any) {
     results.appendError(error, ActionErrorType.TestError);
   }
+}
+
+async function checkRemediation(inputs: ActionInputs, results: ActionResults) {
+  if (!results.hasActionErrors()) {
+    core.debug(
+      "No issues found in the target repository, no need to check remediation.",
+    );
+    return;
+  }
+  if (!inputs.shouldCheckRemediation()) {
+    core.debug("Skipping remediation check.");
+    return;
+  }
+  await RemediationManager.checkRemediation(
+    results,
+    inputs.hasRemediationLabel() ? inputs.remediationLabel : undefined,
+    inputs.gitHubToken,
+  );
 }
 
 async function reportResults(

@@ -80,6 +80,10 @@ export class ActionInputs {
     return this.remediationLabel.length > 0;
   }
 
+  public shouldCheckRemediation(): boolean {
+    return this.hasRemediationLabel() && this.gitHubToken !== undefined;
+  }
+
   public get repositoryName(): string {
     const url = new URL(this.repositoryUrl);
     const pathParts = url.pathname.split("/");
