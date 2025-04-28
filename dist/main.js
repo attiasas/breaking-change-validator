@@ -148,7 +148,10 @@ function reportResults(target, inputs, results) {
                 core.info(`\n${summary}\n`);
             }
         }
-        // Set the action msg
+        if (results.generalErrors.length === 0 && !results.hasNotResolvedErrors()) {
+            return;
+        }
+        // Set the action failed
         core.setFailed(output_1.Output.getActionFailedMessage(results));
     });
 }

@@ -129,7 +129,10 @@ async function reportResults(
       core.info(`\n${summary}\n`);
     }
   }
-  // Set the action msg
+  if (results.generalErrors.length === 0 && !results.hasNotResolvedErrors()) {
+    return;
+  }
+  // Set the action failed
   core.setFailed(Output.getActionFailedMessage(results));
 }
 
