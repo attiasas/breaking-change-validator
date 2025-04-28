@@ -124,11 +124,12 @@ export class Utils {
         return false;
       }
       const labels = context.payload.pull_request.labels;
+      core.info(`PR labels: ${JSON.stringify(labels)}`);
       const labelExists = labels.some((label: { name: string }) => label.name === labelToCheck);
       if (labelExists) {
-        core.info(`Label "${labelToCheck}" exists in the repository.`);
+        core.info(`Label "${labelToCheck}" exists in the pull request.`);
       } else {
-        core.info(`Label "${labelToCheck}" does not exist in the repository.`);
+        core.info(`Label "${labelToCheck}" does not exist in the pull request.`);
       }
       return labelExists;
     } catch (error: any) {

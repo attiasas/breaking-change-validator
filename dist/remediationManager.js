@@ -44,6 +44,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.RemediationManager = exports.RemediationType = void 0;
 const core = __importStar(require("@actions/core"));
+const github = __importStar(require("@actions/github"));
 const output_1 = require("./utils/output");
 const utils_1 = require("./utils/utils");
 var RemediationType;
@@ -59,7 +60,7 @@ class RemediationManager {
                     if (yield utils_1.Utils.isLabelExists(remediationLabel, gitHubToken)) {
                         this.markResolvedWithLabel(remediationLabel, results);
                     }
-                    else {
+                    else if (github.context.payload.pull_request) {
                         // Add hint to all not resolved errors without hints that the label does not exist
                         for (const error of results.getActionErrors()) {
                             if (!error.isResolved() && error.hint === undefined) {

@@ -1,4 +1,6 @@
 import * as core from "@actions/core";
+import * as github from "@actions/github";
+
 import { ActionErrorType, ActionResults, Output } from "./utils/output";
 import { Utils } from "./utils/utils";
 
@@ -17,7 +19,7 @@ export class RemediationManager {
       if (remediationLabel) {
         if (await Utils.isLabelExists(remediationLabel, gitHubToken)) {
           this.markResolvedWithLabel(remediationLabel, results);
-        } else {
+        } else if (github.context.payload.pull_request) {
           // Add hint to all not resolved errors without hints that the label does not exist
           for (const error of results.getActionErrors()) {
             if (!error.isResolved() && error.hint === undefined) {
