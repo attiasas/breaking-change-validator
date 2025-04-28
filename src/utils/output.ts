@@ -11,7 +11,7 @@ class ActionError {
     public readonly type: ActionErrorType,
     public readonly issue: string,
     public readonly stdErr?: string,
-    public readonly hint?: string,
+    public hint?: string,
   ) {}
 
   public addRemediationEvidence(evidence: string): void {

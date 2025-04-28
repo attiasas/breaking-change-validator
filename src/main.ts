@@ -79,6 +79,14 @@ async function checkRemediation(inputs: ActionInputs, results: ActionResults) {
   }
   if (!inputs.shouldCheckRemediation()) {
     core.debug("Skipping remediation check.");
+    for (const error of results.getActionErrors()) {
+      if (error.hint === undefined) {
+        error.hint =
+          !inputs.remediationLabel || inputs.remediationLabel.length === 0
+            ? `Add the ${ActionInputs.REMEDIATION_LABEL_ARG} input to the action to enable remediation.`
+            : `Add the ${inputs.remediationLabel} label to the PR to mark this issue as resolved.`;
+      }
+    }
     return;
   }
   await RemediationManager.checkRemediation(

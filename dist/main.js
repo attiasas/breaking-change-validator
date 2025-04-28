@@ -108,6 +108,14 @@ function checkRemediation(inputs, results) {
         }
         if (!inputs.shouldCheckRemediation()) {
             core.debug("Skipping remediation check.");
+            for (const error of results.getActionErrors()) {
+                if (error.hint === undefined) {
+                    error.hint =
+                        !inputs.remediationLabel || inputs.remediationLabel.length === 0
+                            ? `Add the ${input_1.ActionInputs.REMEDIATION_LABEL_ARG} input to the action to enable remediation.`
+                            : `Add the ${inputs.remediationLabel} label to the PR to mark this issue as resolved.`;
+                }
+            }
             return;
         }
         yield remediationManager_1.RemediationManager.checkRemediation(results, inputs.hasRemediationLabel() ? inputs.remediationLabel : undefined, inputs.gitHubToken);

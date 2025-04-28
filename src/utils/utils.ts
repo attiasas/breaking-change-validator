@@ -124,8 +124,6 @@ export class Utils {
         return false;
       }
       const labels = context.payload.pull_request.labels;
-      core.info(`Labels in PR: ${JSON.stringify(labels)}`);
-      
       const labelExists = labels.some((label: { name: string }) => label.name === labelToCheck);
       if (labelExists) {
         core.info(`Label "${labelToCheck}" exists in the repository.`);
