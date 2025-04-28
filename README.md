@@ -40,6 +40,7 @@ on:
     tags-ignore:
       - '**'
   pull_request:
+    types: [labeled, unlabeled, opened, edited]  # Run when labels change or PR events occur
   workflow_dispatch:
 
 # Ensures that only the latest commit is running for each PR at a time.
@@ -65,6 +66,8 @@ jobs:
             test_command: 'go test -v -race ./...'
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
 
       - uses: attiasas/breaking-change-validator@v1
         env:
@@ -97,6 +100,15 @@ jobs:
 ### Remediation Label
 In order to resolve the issues raised by the action you can specify the `remediation_label` input.
 If provided, the action will check if the related pull request is labeled with this value and mark the issues as resolved.
+
+#### Preconditions
+
+Make sure to add the related pull request types to capture when labels are changed.
+```yaml
+on:
+  pull_request:
+    types: [labeled, unlabeled, opened, edited]  # Run when labels change or PR events occur
+```
 
 ## 💬 Output 
 

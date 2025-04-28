@@ -124,7 +124,7 @@ export class Utils {
         return false;
       }
       const labels = context.payload.pull_request.labels;
-      core.info(`PR labels: ${JSON.stringify(labels)}`);
+      core.debug(`PR labels: ${JSON.stringify(labels)}`);
       const labelExists = labels.some((label: { name: string }) => label.name === labelToCheck);
       if (labelExists) {
         core.info(`Label "${labelToCheck}" exists in the pull request.`);
