@@ -89,7 +89,7 @@ class ActionInputs {
         return this.remediationLabel.length > 0;
     }
     shouldCheckRemediation() {
-        return this.hasRemediationLabel() && this.gitHubToken !== undefined;
+        return this.hasRemediationLabel();
     }
     get repositoryName() {
         const url = new URL(this.repositoryUrl);

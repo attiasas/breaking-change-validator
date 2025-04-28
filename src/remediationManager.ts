@@ -17,6 +17,13 @@ export class RemediationManager {
       if (remediationLabel) {
         if (await Utils.isLabelExists(remediationLabel, gitHubToken)) {
           this.markResolvedWithLabel(remediationLabel, results);
+        } else {
+          // Add hint to all not resolved errors without hints that the label does not exist
+          for (const error of results.getActionErrors()) {
+            if (!error.isResolved() && error.hint === undefined) {
+              error.hint = `Add the ${remediationLabel} label to the PR to mark this issue as resolved.`;
+            }
+          }
         }
       }
       return true;

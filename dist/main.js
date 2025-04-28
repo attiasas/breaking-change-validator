@@ -108,12 +108,10 @@ function checkRemediation(inputs, results) {
         }
         if (!inputs.shouldCheckRemediation()) {
             core.debug("Skipping remediation check.");
+            // Add hint to all not resolved errors without hints to add remediation check
             for (const error of results.getActionErrors()) {
-                if (error.hint === undefined) {
-                    error.hint =
-                        !inputs.remediationLabel || inputs.remediationLabel.length === 0
-                            ? `Add the ${input_1.ActionInputs.REMEDIATION_LABEL_ARG} input to the action to enable remediation.`
-                            : `Add the ${inputs.remediationLabel} label to the PR to mark this issue as resolved.`;
+                if (!error.isResolved() && error.hint === undefined) {
+                    error.hint = `Add the ${input_1.ActionInputs.REMEDIATION_LABEL_ARG} input to the action to enable remediation.`;
                 }
             }
             return;

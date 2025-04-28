@@ -81,7 +81,7 @@ export class ActionInputs {
   }
 
   public shouldCheckRemediation(): boolean {
-    return this.hasRemediationLabel() && this.gitHubToken !== undefined;
+    return this.hasRemediationLabel();
   }
 
   public get repositoryName(): string {
