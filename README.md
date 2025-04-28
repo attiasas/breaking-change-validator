@@ -68,7 +68,7 @@ jobs:
 
       - uses: attiasas/breaking-change-validator@v1
         env:
-          # Optional, needed for some action operations (generating PR comments, remediation label)
+          # Optional, needed for some action operations (generating PR comments)
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           repository: ${{ matrix.library.url }}
@@ -97,10 +97,6 @@ jobs:
 ### Remediation Label
 In order to resolve the issues raised by the action you can specify the `remediation_label` input.
 If provided, the action will check if the related pull request is labeled with this value and mark the issues as resolved.
-
-#### Preconditions
-
-`GITHUB_TOKEN` environment variable - GitHub token . You can utilize ${{ secrets.GITHUB_TOKEN }}, which is an automatically generated token by GitHub.
 
 ## 💬 Output 
 

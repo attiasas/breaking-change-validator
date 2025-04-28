@@ -153,7 +153,7 @@ class Utils {
             return undefined;
         }
     }
-    static isLabelExists(label, token) {
+    static isLabelExists(labelToCheck, token) {
         return __awaiter(this, void 0, void 0, function* () {
             try {
                 if (!token) {
@@ -164,20 +164,14 @@ class Utils {
                 if (!context.payload.pull_request) {
                     return false;
                 }
-                const octokit = github.getOctokit(token);
-                const { owner, repo } = context.repo;
-                const labels = yield octokit.rest.issues.listLabelsForRepo({
-                    owner,
-                    repo,
-                    issue_number: context.payload.pull_request.number,
-                });
-                core.info(`Labels in PR: ${JSON.stringify(labels.data)}`);
-                const labelExists = labels.data.some((l) => l.name === label);
+                const labels = context.payload.pull_request.labels;
+                core.info(`Labels in PR: ${JSON.stringify(labels)}`);
+                const labelExists = labels.some((label) => label.name === labelToCheck);
                 if (labelExists) {
-                    core.info(`Label "${label}" exists in the repository.`);
+                    core.info(`Label "${labelToCheck}" exists in the repository.`);
                 }
                 else {
-                    core.info(`Label "${label}" does not exist in the repository.`);
+                    core.info(`Label "${labelToCheck}" does not exist in the repository.`);
                 }
                 return labelExists;
             }

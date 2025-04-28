@@ -113,7 +113,7 @@ export class Utils {
     }
   }
 
-  public static async isLabelExists(label: string, token?: string): Promise<boolean> {
+  public static async isLabelExists(labelToCheck: string, token?: string): Promise<boolean> {
     try {
       if (!token) {
         throw new ErrorWithHint("GitHub token is required but not provided.", `Set the ${ActionInputs.SOURCE_GIT_TOKEN_ENV} environment variable.`);
@@ -123,19 +123,14 @@ export class Utils {
       if (!context.payload.pull_request) {
         return false;
       }
-      const octokit = github.getOctokit(token);
-      const { owner, repo } = context.repo;
-      const labels = await octokit.rest.issues.listLabelsForRepo({
-        owner,
-        repo,
-        issue_number: context.payload.pull_request.number,
-      });
-      core.info(`Labels in PR: ${JSON.stringify(labels.data)}`);
-      const labelExists = labels.data.some((l) => l.name === label);
+      const labels = context.payload.pull_request.labels;
+      core.info(`Labels in PR: ${JSON.stringify(labels)}`);
+      
+      const labelExists = labels.some((label: { name: string }) => label.name === labelToCheck);
       if (labelExists) {
-        core.info(`Label "${label}" exists in the repository.`);
+        core.info(`Label "${labelToCheck}" exists in the repository.`);
       } else {
-        core.info(`Label "${label}" does not exist in the repository.`);
+        core.info(`Label "${labelToCheck}" does not exist in the repository.`);
       }
       return labelExists;
     } catch (error: any) {
