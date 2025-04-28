@@ -1,0 +1,26 @@
+name: "Validate changes"
+description: "Validate if the branch changes breaks a repository/module that depends on it"
+author: "Assaf Attias"
+inputs:
+  repository:
+    description: 'Git clone URL of the repository to validate'
+    required: true
+  branch:
+    description: 'Optional specific branch of the repository to validate'
+    required: false
+    default: ''
+  test_command:
+    description: 'Optional shell command to run at the target repository with the changes'
+    required: false
+    default: ''
+  output_strategy:
+    description: 'The strategy to use for output (terminal, summary, comment)'
+    required: false
+    default: 'terminal,summary'
+  remediation_label:
+    description: 'If provided and the label exists at the pull request, the action will consider the issues as resolved'
+    required: false
+    default: ''
+runs:
+  using: "node20"
+  main: "dist/main.js"
