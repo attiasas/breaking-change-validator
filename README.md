@@ -12,8 +12,8 @@ This action is particularly useful for teams working on interconnected projects,
 
 ### Supported Technologies
 
-|          |                                              |
-|----------|----------------------------------------------|
+|          |                                               |
+|----------|-----------------------------------------------|
 | GoLang   | <img src="resources/icons/go.svg" width="30"> |
 
 ## 🏗️ Usage
@@ -34,9 +34,18 @@ Replace `<REPOSITORY_CLONE_URL>` with the clone URL of the repository you want t
 name: Validate breaking depended libraries
 
 on:
-  workflow_dispatch:
+  push:
+    branches:
+      - '**'
+    tags-ignore:
+      - '**'
   pull_request:
-    types: [ opened, synchronize ]
+  workflow_dispatch:
+
+# Ensures that only the latest commit is running for each PR at a time.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.sha }}-${{ github.ref }}
+  cancel-in-progress: true
 
 permissions:
   # required for the action to create comments on the PR
@@ -64,9 +73,9 @@ jobs:
         with:
           repository: ${{ matrix.library.url }}
           branch: ${{ matrix.library.branch }}
-          test_command: ${{ matrix.library.test_command }}
-          output_strategy: 'terminal,summary,comment'
-          remediation_label: 'validated'
+          output_strategy: 'terminal, summary, comment'
+          test_command: ${{ github.event_name != 'pull_request' && matrix.library.test_command || (contains(github.event.pull_request.labels.*.name, 'integration tests') && matrix.library.test_command) || '' }}
+          remediation_label: ${{ github.event_name == 'pull_request' && 'validated' || '' }}
 
 ```
 

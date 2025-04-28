@@ -159,13 +159,19 @@ class Utils {
                 if (!token) {
                     throw new ErrorWithHint("GitHub token is required but not provided.", `Set the ${input_1.ActionInputs.SOURCE_GIT_TOKEN_ENV} environment variable.`);
                 }
-                const octokit = github.getOctokit(token);
                 const context = github.context;
+                // Make sure we are in PR context
+                if (!context.payload.pull_request) {
+                    return false;
+                }
+                const octokit = github.getOctokit(token);
                 const { owner, repo } = context.repo;
                 const labels = yield octokit.rest.issues.listLabelsForRepo({
                     owner,
                     repo,
+                    issue_number: context.payload.pull_request.number,
                 });
+                core.info(`Labels in PR: ${JSON.stringify(labels.data)}`);
                 const labelExists = labels.data.some((l) => l.name === label);
                 if (labelExists) {
                     core.info(`Label "${label}" exists in the repository.`);
