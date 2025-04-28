@@ -114,9 +114,10 @@ on:
 
 The action reports the results in a generated [Job Summary](https://github.blog/news-insights/product-news/supercharging-github-actions-with-job-summaries/)
 
-> TODO: Inset example img <img src="resources/examples/output_summary.png">
+<img src="resources/examples/output_summary.png">
 
-> TODO: Inset example img <img src="resources/examples/output_summary_resolved.png">
+<img src="resources/examples/output_summary_resolved.png">
+
 ### PR Comment generation
 
 If the action runs on a related PR, you can optionally configure the action to generate a comment on it if issues are detected and not resolved.
