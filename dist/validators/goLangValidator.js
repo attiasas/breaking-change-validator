@@ -82,8 +82,9 @@ class GolangValidator {
     }
     validate(wd) {
         return __awaiter(this, void 0, void 0, function* () {
+            core.debug("Running go generate...");
+            yield utils_1.Utils.runCommand(["go", "generate", "./..."]);
             core.info("Running go validation...");
-            // await exec.exec("go", ["vet", "./..."], { cwd: wd });
             yield utils_1.Utils.runCommand(["go", "vet", "./..."], { cwd: wd, stdErrFilter: (data) => {
                     if (data.startsWith("go: downloading")) {
                         return "";

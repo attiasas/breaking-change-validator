@@ -61,7 +61,7 @@ function main() {
             // Clone the target repository
             let targetDir = yield utils_1.Utils.cloneRepository(inputs);
             // Prepare the target for the actions
-            yield validationManager.installTarget(targetDir);
+            yield validationManager.installTarget(targetDir, inputs.installCommand);
             // Validate the target
             if ((yield validateTarget(validationManager, targetDir, results)) &&
                 inputs.shouldRunTargetTests()) {

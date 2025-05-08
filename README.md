@@ -25,7 +25,7 @@ To use this action in your GitHub workflow, add the following step to your workf
     repository: <REPOSITORY_CLONE_URL>
 ```
 
-Replace `<REPOSITORY_CLONE_URL>` with the clone URL of the repository you want to validate against.
+> Replace `<REPOSITORY_CLONE_URL>` with the clone URL of the repository you want to validate against.
 
 <details>
 <summary>Full Workflow Template (e.g. .github/workflows/change-validator.yml)</summary>
@@ -77,8 +77,9 @@ jobs:
           repository: ${{ matrix.library.url }}
           branch: ${{ matrix.library.branch }}
           output_strategy: 'terminal, summary, comment'
+          # Run dependency tests only if label exists at the PR or running on a normal branch
           test_command: ${{ github.event_name != 'pull_request' && matrix.library.test_command || (contains(github.event.pull_request.labels.*.name, 'integration tests') && matrix.library.test_command) || '' }}
-          remediation_label: ${{ github.event_name == 'pull_request' && 'validated' || '' }}
+          remediation_label: 'validated'
 
 ```
 
@@ -91,24 +92,10 @@ jobs:
 |---------------------|--------------------------------------------------------------------------------------------------------------------------|----------|--------------------|
 | `repository`        | The clone URL of the dependent repository to validate.                                                                   | Yes      | None               |
 | `branch`            | The branch of the dependent repository to validate.                                                                      | No       | Default Ref        |
-| `test_command`      | Optional shell command to run at the target repository with the changes.                                                 | No       | None               |
 | `output_strategy`   | Determines where validation results will be shown: `terminal`, `summary`, or `comment`. Comma-separated values allowed.  | No       | `terminal,summary` |
+| `install_command`   | Optional shell command to run at the target repository to prepare it for validation.                                     | No       | None               |
+| `test_command`      | Optional shell command to run at the target repository with the changes.                                                 | No       | None               |
 | `remediation_label` | If provided and the label exists on the pull request, issues will be considered resolved and the check will pass.        | No       | None               |
-
-## 🧪 Issue Remediation
-
-### Remediation Label
-In order to resolve the issues raised by the action you can specify the `remediation_label` input.
-If provided, the action will check if the related pull request is labeled with this value and mark the issues as resolved.
-
-#### Preconditions
-
-Make sure to add the related pull request types to capture when labels are changed.
-```yaml
-on:
-  pull_request:
-    types: [labeled, unlabeled, opened, edited]  # Run when labels change or PR events occur
-```
 
 ## 💬 Output 
 
@@ -126,7 +113,22 @@ If the action runs on a related PR, you can optionally configure the action to g
 
 `GITHUB_TOKEN` environment variable - GitHub token with `pull-requests: write` permission.
 
-You can utilize ${{ secrets.GITHUB_TOKEN }}, which is an automatically generated token by GitHub.
+You can utilize [$\{{secrets.GITHUB\_TOKEN\}}](https://docs.github.com/en/actions/security-guides/automatic-token-authentication), which is an automatically generated token by GitHub.
+
+## 🧪 Issue Remediation
+
+### Remediation Label
+In order to resolve the issues raised by the action you can specify the `remediation_label` input.
+If provided, the action will check if the related pull request is labeled with this value and mark the issues as resolved.
+
+#### Preconditions
+
+Make sure to add the related pull request types to capture when labels are changed.
+```yaml
+on:
+  pull_request:
+    types: [labeled, unlabeled, opened, edited]  # Run when labels change or PR events occur
+```
 
 ## 🫱🏻‍🫲🏼 Contributions
 
