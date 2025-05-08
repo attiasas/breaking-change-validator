@@ -220,7 +220,7 @@ export class Output {
     }
     let out = ` - Found `;
     if (resolvedCount == 0 || activeCount == 0) {
-      return out + `${this.getColoredTag(activeCount, resolvedCount == 0 ? Color.IssueColor : Color.ResolvedColor)} Issues.${activeCount == 0 ? " All resolved" : ""}`;
+      return out + `${this.getColoredTag(activeCount + resolvedCount, resolvedCount == 0 ? Color.IssueColor : Color.ResolvedColor)} Issues.${activeCount == 0 ? " All resolved" : ""}`;
     }
     return out + `${this.getColoredTag(activeCount + resolvedCount, Color.MixedColor)} Issues. ( ${this.getColoredTag(activeCount, Color.IssueColor)} active, ${this.getColoredTag(resolvedCount, Color.ResolvedColor)} resolved )`; 
   }
