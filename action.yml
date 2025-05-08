@@ -9,6 +9,10 @@ inputs:
     description: 'Optional specific branch of the repository to validate'
     required: false
     default: ''
+  install_command:
+    description: 'Optional shell command to run at the target repository to prepare it for validation'
+    required: false
+    default: ''
   test_command:
     description: 'Optional shell command to run at the target repository with the changes'
     required: false

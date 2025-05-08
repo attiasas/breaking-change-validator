@@ -45,6 +45,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.ValidationManager = void 0;
 const core = __importStar(require("@actions/core"));
 const goLangValidator_1 = require("./validators/goLangValidator");
+const utils_1 = require("./utils/utils");
 class ValidationManager {
     constructor() {
         this._validators = [];
@@ -80,7 +81,7 @@ class ValidationManager {
             throw new Error("No supported technology found");
         });
     }
-    installTarget(targetDir) {
+    installTarget(targetDir, installCmd) {
         return __awaiter(this, void 0, void 0, function* () {
             try {
                 core.startGroup("Preparing target repository");
@@ -94,6 +95,10 @@ class ValidationManager {
                 }
                 if (installed.length === 0) {
                     throw new Error("No supported technology found");
+                }
+                if (installCmd !== undefined && installCmd !== "") {
+                    core.info(`Running custom install command: ${installCmd}`);
+                    yield utils_1.Utils.runCommand(installCmd.split(" "));
                 }
                 core.info(`Installed source module to target with ${installed.join(", ")}`);
             }
