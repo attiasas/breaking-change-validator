@@ -26,7 +26,7 @@ async function main() {
     // Clone the target repository
     let targetDir = await Utils.cloneRepository(inputs);
     // Prepare the target for the actions
-    await validationManager.installTarget(targetDir);
+    await validationManager.installTarget(targetDir, inputs.installCommand);
     // Validate the target
     if (
       (await validateTarget(validationManager, targetDir, results)) &&

@@ -1,6 +1,7 @@
 import * as core from "@actions/core";
 import { GolangValidator } from "./validators/goLangValidator";
 import { Module, TechValidator } from "./validators/techValidator";
+import { Utils } from "./utils/utils";
 
 export class ValidationManager {
   private _validators: TechValidator[] = [];
@@ -38,7 +39,10 @@ export class ValidationManager {
     throw new Error("No supported technology found");
   }
 
-  public async installTarget(targetDir: string): Promise<void> {
+  public async installTarget(
+    targetDir: string,
+    installCmd?: string,
+  ): Promise<void> {
     try {
       core.startGroup("Preparing target repository");
       let installed = [];
@@ -51,6 +55,10 @@ export class ValidationManager {
       }
       if (installed.length === 0) {
         throw new Error("No supported technology found");
+      }
+      if (installCmd !== undefined && installCmd !== "") {
+        core.info(`Running custom install command: ${installCmd}`);
+        await Utils.runCommand(installCmd.split(" "));
       }
       core.info(
         `Installed source module to target with ${installed.join(", ")}`,
