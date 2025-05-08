@@ -39,7 +39,12 @@ export class GolangValidator implements TechValidator {
 
     public async validate(wd: string): Promise<void> {
         core.debug("Running go generate...");
-        await Utils.runCommand(["go", "generate", "./..."]);
+        await Utils.runCommand(["go", "generate", "./..."], { cwd: wd , stdErrFilter: (data: string) => {
+            if (data.startsWith("go: downloading")) {
+                return "";
+            }
+            return data;
+        }});
         core.info("Running go validation...");
         await Utils.runCommand(["go", "vet", "./..."], { cwd: wd , stdErrFilter: (data: string) => {
             if (data.startsWith("go: downloading")) {

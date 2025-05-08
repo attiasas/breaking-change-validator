@@ -20,7 +20,7 @@ This action is particularly useful for teams working on interconnected projects,
 
 To use this action in your GitHub workflow, add the following step to your workflow file:
 ```yml
-- uses: attiasas/breaking-change-validator@v1
+- uses: attiasas/breaking-change-validator@main
   with:
     repository: <REPOSITORY_CLONE_URL>
 ```
@@ -90,12 +90,12 @@ jobs:
 
 | Name                | Description                                                                                                              | Required | Default            |
 |---------------------|--------------------------------------------------------------------------------------------------------------------------|----------|--------------------|
-| `repository`        | The clone URL of the dependent repository to validate.                                                                   | Yes      | None               |
+| `repository`        | The clone URL of the dependent repository to validate.                                                                   | Yes      | -                  |
 | `branch`            | The branch of the dependent repository to validate.                                                                      | No       | Default Ref        |
 | `output_strategy`   | Determines where validation results will be shown: `terminal`, `summary`, or `comment`. Comma-separated values allowed.  | No       | `terminal,summary` |
-| `install_command`   | Optional shell command to run at the target repository to prepare it for validation.                                     | No       | None               |
-| `test_command`      | Optional shell command to run at the target repository with the changes.                                                 | No       | None               |
-| `remediation_label` | If provided and the label exists on the pull request, issues will be considered resolved and the check will pass.        | No       | None               |
+| `install_command`   | Optional shell command to run at the target repository to prepare it for validation.                                     | No       | -                  |
+| `test_command`      | Optional shell command to run at the target repository with the changes.                                                 | No       | -                  |
+| `remediation_label` | If provided and the label exists on the pull request, issues will be considered resolved and the check will pass.        | No       | -                  |
 
 ## 💬 Output 
 
