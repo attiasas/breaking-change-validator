@@ -9,6 +9,8 @@ export class ActionInputs {
   public static readonly REPOSITORY_BRANCH_ARG: string = "branch";
   // The command to run the tests if any
   public static readonly TEST_COMMAND_ARG: string = "test_command";
+  // The command to run the repository installation if any
+  public static readonly INSTALL_COMMAND_ARG: string = "install_command";
   // Array, comma delimited, The strategy to use for output (terminal, job summary, comment)
   public static readonly OUTPUT_STRATEGY_ARG: string = "output_strategy";
   // If provided and the label exists, the action will consider the issues as resolved
@@ -19,6 +21,7 @@ export class ActionInputs {
   public readonly repositoryUrl: string;
   public readonly repositoryBranch: string;
   public readonly testCommand: string;
+  public readonly installCommand: string;
   public readonly remediationLabel: string;
 
   public readonly sourceDir: string;
@@ -33,6 +36,7 @@ export class ActionInputs {
       required: true,
     });
     this.repositoryBranch = core.getInput(ActionInputs.REPOSITORY_BRANCH_ARG);
+    this.installCommand = core.getInput(ActionInputs.INSTALL_COMMAND_ARG);
     // Test config
     this.testCommand = core.getInput(ActionInputs.TEST_COMMAND_ARG);
     // Output config
@@ -106,6 +110,7 @@ export class ActionInputs {
         actions: {
           validation: "true",
           customTestCommand: this.shouldRunTargetTests(),
+          customInstallCommand: this.installCommand.length > 0,
         },
         output: output,
         remediation: remediation,
